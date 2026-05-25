@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { adminLinks, publicLinks, userLinks } from "../constants/navigation";
 import { useAuthStore } from "../../features/auth/store/useAuthStore";
 
@@ -14,6 +15,95 @@ function NavItem({ to, label }) {
     >
       {label}
     </NavLink>
+  );
+}
+
+function UserMenu({ user, onLogout }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
+
+  const isAdminRouteActive = adminLinks.some((link) => location.pathname === link.to);
+  const isUserRouteActive = userLinks.some((link) => location.pathname === link.to);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen((current) => !current)}
+        className={`flex items-center gap-3 rounded-[1.4rem] border px-4 py-2.5 text-left transition ${
+          isOpen || isAdminRouteActive || isUserRouteActive
+            ? "border-[#c8b29d] bg-white shadow-[0_10px_24px_rgba(74,55,37,0.08)]"
+            : "border-transparent bg-white/40 hover:border-[#dfd1c1] hover:bg-white/70"
+        }`}
+      >
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3e7d9] text-sm font-semibold text-[#5a4737]">
+          {user.name?.slice(0, 1)?.toUpperCase() || "U"}
+        </div>
+        <div className="text-right">
+          <div className="text-sm font-semibold text-[#3f3328]">{user.name}</div>
+          <div className="text-xs uppercase tracking-[0.16em] text-[#8c7a6a]">{user.role}</div>
+        </div>
+      </button>
+
+      {isOpen ? (
+        <div className="absolute right-0 top-[calc(100%+0.75rem)] z-20 w-64 overflow-hidden rounded-[1.4rem] border border-[#e2d5c7] bg-white shadow-[0_18px_40px_rgba(74,55,37,0.12)]">
+          <div className="border-b border-[#f1e5d7] px-4 py-4">
+            <div className="text-sm font-semibold text-[#3f3328]">{user.name}</div>
+            <div className="mt-1 text-xs text-[#8c7a6a]">{user.email}</div>
+          </div>
+
+          <div className="border-b border-[#f1e5d7] p-2">
+            <div className="px-2 py-2 text-xs tracking-[0.22em] text-[#9a836d]">USER MENU</div>
+            {userLinks.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                className={({ isActive }) =>
+                  `block rounded-[1rem] px-3 py-2.5 text-sm transition ${
+                    isActive ? "bg-[#f5eadf] font-semibold text-[#3f3328]" : "text-[#6f6257] hover:bg-[#fbf5ee]"
+                  }`
+                }
+              >
+                {link.label}
+              </NavLink>
+            ))}
+          </div>
+
+          {user.role === "ADMIN" ? (
+            <div className="border-b border-[#f1e5d7] p-2">
+              <div className="px-2 py-2 text-xs tracking-[0.22em] text-[#9a836d]">ADMIN MENU</div>
+              {adminLinks.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  className={({ isActive }) =>
+                    `block rounded-[1rem] px-3 py-2.5 text-sm transition ${
+                      isActive ? "bg-[#f5eadf] font-semibold text-[#3f3328]" : "text-[#6f6257] hover:bg-[#fbf5ee]"
+                    }`
+                  }
+                >
+                  {link.label}
+                </NavLink>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="p-2">
+            <button
+              type="button"
+              onClick={onLogout}
+              className="block w-full rounded-[1rem] px-3 py-2.5 text-left text-sm text-[#8f4e4e] transition hover:bg-[#fff3f3]"
+            >
+              ออกจากระบบ
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -34,31 +124,11 @@ export function AppShell() {
             {publicLinks.map((link) => (
               <NavItem key={link.to} {...link} />
             ))}
-            {user &&
-              userLinks.map((link) => (
-                <NavItem key={link.to} {...link} />
-              ))}
-            {user?.role === "ADMIN" &&
-              adminLinks.map((link) => (
-                <NavItem key={link.to} {...link} />
-              ))}
           </nav>
 
           <div className="flex items-center gap-3">
             {user ? (
-              <>
-                <div className="text-right">
-                  <div className="text-sm font-semibold">{user.name}</div>
-                  <div className="text-xs uppercase text-ink/50">{user.role}</div>
-                </div>
-                <button
-                  type="button"
-                  onClick={clearAuth}
-                  className="rounded-full border border-ink/15 px-4 py-2 text-sm hover:bg-white/70"
-                >
-                  ออกจากระบบ
-                </button>
-              </>
+              <UserMenu user={user} onLogout={clearAuth} />
             ) : (
               <div className="flex items-center gap-2">
                 <NavItem to="/login" label="เข้าสู่ระบบ" />

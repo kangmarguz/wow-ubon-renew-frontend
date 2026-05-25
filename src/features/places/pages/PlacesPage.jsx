@@ -64,6 +64,13 @@ export function PlacesPage() {
     });
   };
 
+  const handleClearFilters = () => {
+    setSearchValue("");
+    startTransition(() => {
+      setSearchParams(new URLSearchParams(), { replace: true });
+    });
+  };
+
   return (
     <div className="space-y-8">
       <PageIntro
@@ -127,6 +134,16 @@ export function PlacesPage() {
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={handleClearFilters}
+            className="inline-flex rounded-full border border-[#d6c7b8] bg-white px-4 py-2 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:text-[#4c3b2d]"
+          >
+            ล้างตัวกรอง
+          </button>
         </div>
       </SectionCard>
 
