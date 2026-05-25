@@ -1,5 +1,5 @@
 export const publicLinks = [
-  { to: "/", label: "หน้าแรก" },
+  { to: "/", label: "หน้าแรก", end: true },
   { to: "/places", label: "สถานที่" }
 ];
 
@@ -10,7 +10,7 @@ export const userLinks = [
 ];
 
 export const adminLinks = [
-  { to: "/admin", label: "แอดมิน" },
+  { to: "/admin", label: "แอดมิน", end: true },
   { to: "/admin/places", label: "จัดการสถานที่" },
   { to: "/admin/reviews", label: "จัดการรีวิว" },
   { to: "/admin/users", label: "จัดการผู้ใช้" }
