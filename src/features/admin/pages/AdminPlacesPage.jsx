@@ -8,28 +8,52 @@ import { StateNotice } from "../../../shared/ui/StateNotice";
 import { getPlaceCategoryLabel } from "../../../shared/constants/placeCategories";
 import { ProfilePagination } from "../../profile/components/ProfilePagination";
 import { AdminActionDialog } from "../components/AdminActionDialog";
-import { approvePendingPlace, fetchPendingPlaces, rejectPendingPlace } from "../api/adminPlacesApi";
+import {
+  approvePendingPlace,
+  deactivateAdminPlace,
+  fetchAdminPlaces,
+  rejectPendingPlace
+} from "../api/adminPlacesApi";
 
 const PAGE_SIZE = 10;
+
+const statusBadgeConfig = {
+  APPROVED: "border-[#cfe4d4] bg-[#edf7ef] text-[#2f6b41]",
+  PENDING: "border-[#eadbb8] bg-[#fff6df] text-[#8a6432]",
+  REJECTED: "border-[#ebc8c8] bg-[#fff1f1] text-[#9a4b4b]"
+};
+
+const statusLabelConfig = {
+  APPROVED: "เผยแพร่แล้ว",
+  PENDING: "รอตรวจสอบ",
+  REJECTED: "ต้องแก้ไข"
+};
 
 export function AdminPlacesPage() {
   const queryClient = useQueryClient();
   const [rejectTarget, setRejectTarget] = useState(null);
+  const [deactivateTarget, setDeactivateTarget] = useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const { data: pendingPlaces = [], isLoading, isError, error } = useQuery({
-    queryKey: ["admin-pending-places"],
-    queryFn: fetchPendingPlaces
+  const { data: places = [], isLoading, isError, error } = useQuery({
+    queryKey: ["admin-places"],
+    queryFn: fetchAdminPlaces
   });
+
+  const invalidatePlaceQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ["admin-places"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-pending-places"] });
+    queryClient.invalidateQueries({ queryKey: ["places"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+    queryClient.invalidateQueries({ queryKey: ["my-places"] });
+  };
 
   const approveMutation = useMutation({
     mutationFn: approvePendingPlace,
     onSuccess() {
       toast.success("อนุมัติสถานที่เรียบร้อยแล้ว");
-      queryClient.invalidateQueries({ queryKey: ["admin-pending-places"] });
-      queryClient.invalidateQueries({ queryKey: ["places"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+      invalidatePlaceQueries();
     },
     onError(mutationError) {
       toast.error(mutationError?.response?.data?.message || "อนุมัติสถานที่ไม่สำเร็จ");
@@ -37,16 +61,27 @@ export function AdminPlacesPage() {
   });
 
   const rejectMutation = useMutation({
-    mutationFn: ({ placeId, rejectionReason: note }) => rejectPendingPlace(placeId, note),
+    mutationFn: ({ placeId, note }) => rejectPendingPlace(placeId, note),
     onSuccess() {
       toast.success("ปฏิเสธสถานที่เรียบร้อยแล้ว");
       setRejectTarget(null);
       setRejectionReason("");
-      queryClient.invalidateQueries({ queryKey: ["admin-pending-places"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
+      invalidatePlaceQueries();
     },
     onError(mutationError) {
       toast.error(mutationError?.response?.data?.message || "ปฏิเสธสถานที่ไม่สำเร็จ");
+    }
+  });
+
+  const deactivateMutation = useMutation({
+    mutationFn: deactivateAdminPlace,
+    onSuccess() {
+      toast.success("ปิดการแสดงผลสถานที่เรียบร้อยแล้ว");
+      setDeactivateTarget(null);
+      invalidatePlaceQueries();
+    },
+    onError(mutationError) {
+      toast.error(mutationError?.response?.data?.message || "ปิดการแสดงผลสถานที่ไม่สำเร็จ");
     }
   });
 
@@ -54,11 +89,11 @@ export function AdminPlacesPage() {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
     if (!normalizedSearch) {
-      return pendingPlaces;
+      return places;
     }
 
-    return pendingPlaces.filter((place) => place.name.toLowerCase().includes(normalizedSearch));
-  }, [pendingPlaces, searchTerm]);
+    return places.filter((place) => place.name.toLowerCase().includes(normalizedSearch));
+  }, [places, searchTerm]);
 
   const totalPages = Math.max(1, Math.ceil(filteredPlaces.length / PAGE_SIZE));
   const paginatedPlaces = filteredPlaces.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
@@ -78,7 +113,7 @@ export function AdminPlacesPage() {
       <PageIntro
         eyebrow="แอดมิน"
         title="จัดการสถานที่"
-        description="ตรวจสอบรายการที่รออนุมัติจากผู้ใช้ ค้นหาตามชื่อสถานที่ได้ และไล่ตรวจทีละ 10 รายการเพื่อให้จัดการคิวได้ง่ายขึ้น"
+        description="ตรวจสอบ อนุมัติ ปฏิเสธ และปิดการแสดงผลสถานที่จากหน้าเดียว พร้อมค้นหาตามชื่อและแบ่งหน้า 10 รายการต่อครั้ง"
         className="max-w-4xl"
         eyebrowClassName="tracking-[0.28em]"
         titleClassName="text-[2.4rem] leading-tight md:text-[3rem]"
@@ -86,8 +121,8 @@ export function AdminPlacesPage() {
       />
 
       <SectionCard
-        title="คิวรายการรออนุมัติ"
-        description="แสดงเฉพาะรายการสถานะ PENDING พร้อมการค้นหาและแบ่งหน้า เพื่อให้ไล่ตรวจรายการได้เร็วขึ้นเมื่อคิวเริ่มเยอะ"
+        title="รายการสถานที่ในระบบ"
+        description="หน้านี้รวมทั้งรายการที่รอตรวจสอบ รายการที่เผยแพร่แล้ว และรายการที่ถูกปิดการแสดงผล เพื่อให้จัดการต่อเนื่องได้จากที่เดียว"
         className="border-[#eadfce] bg-[linear-gradient(180deg,rgba(255,253,249,0.98),rgba(250,244,236,0.94))]"
         titleClassName="text-[1.7rem] text-[#3f3328]"
         descriptionClassName="text-[14px] leading-7 text-[#74685e]"
@@ -97,74 +132,116 @@ export function AdminPlacesPage() {
           label="ค้นหาจากชื่อสถานที่"
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
-          placeholder="พิมพ์ชื่อสถานที่ที่ต้องการตรวจสอบ"
+          placeholder="พิมพ์ชื่อสถานที่ที่ต้องการจัดการ"
         />
 
-        {isLoading ? <StateNotice>กำลังโหลดรายการรออนุมัติ...</StateNotice> : null}
+        {isLoading ? <StateNotice>กำลังโหลดรายการสถานที่...</StateNotice> : null}
 
         {isError ? (
-          <StateNotice tone="error">{error?.response?.data?.message || "ไม่สามารถดึงรายการรออนุมัติได้"}</StateNotice>
+          <StateNotice tone="error">{error?.response?.data?.message || "ไม่สามารถดึงรายการสถานที่ได้"}</StateNotice>
         ) : null}
 
-        {!isLoading && !isError && pendingPlaces.length === 0 ? <StateNotice>ตอนนี้ไม่มีรายการรออนุมัติ</StateNotice> : null}
+        {!isLoading && !isError && places.length === 0 ? <StateNotice>ตอนนี้ยังไม่มีรายการสถานที่ในระบบ</StateNotice> : null}
 
-        {!isLoading && !isError && pendingPlaces.length > 0 && filteredPlaces.length === 0 ? (
+        {!isLoading && !isError && places.length > 0 && filteredPlaces.length === 0 ? (
           <StateNotice>ไม่พบสถานที่ที่ตรงกับชื่อที่ค้นหา</StateNotice>
         ) : null}
 
         {!isLoading && !isError && paginatedPlaces.length > 0 ? (
           <div className="space-y-4">
-            {paginatedPlaces.map((place) => (
-              <div
-                key={place.id}
-                className="grid gap-4 rounded-[1.6rem] border border-[#e4d7ca] bg-white/92 p-5 shadow-[0_10px_24px_rgba(74,55,37,0.05)] md:grid-cols-[112px_minmax(0,1fr)_auto]"
-              >
-                <div className="overflow-hidden rounded-[1.2rem] bg-[#f4ebdf]">
-                  {place.images?.[0]?.url ? (
-                    <img src={place.images[0].url} alt={place.name} className="h-28 w-full object-cover" />
-                  ) : (
-                    <div className="flex h-28 items-center justify-center text-xs text-[#8a7a6a]">ไม่มีรูป</div>
-                  )}
-                </div>
+            {paginatedPlaces.map((place) => {
+              const isPending = place.status === "PENDING";
+              const isInactive = place.isActive === false;
+              const isBusy =
+                approveMutation.isPending ||
+                rejectMutation.isPending ||
+                deactivateMutation.isPending;
 
-                <div className="min-w-0 space-y-2">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-xs tracking-[0.22em] text-[#a06840]">{getPlaceCategoryLabel(place.category)}</span>
-                    <span className="rounded-full border border-[#eadbb8] bg-[#fff6df] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[#8a6432]">
-                      PENDING
-                    </span>
+              return (
+                <div
+                  key={place.id}
+                  className="grid gap-4 rounded-[1.6rem] border border-[#e4d7ca] bg-white/92 p-5 shadow-[0_10px_24px_rgba(74,55,37,0.05)] md:grid-cols-[112px_minmax(0,1fr)_auto]"
+                >
+                  <div className="overflow-hidden rounded-[1.2rem] bg-[#f4ebdf]">
+                    {place.images?.[0]?.url ? (
+                      <img src={place.images[0].url} alt={place.name} className="h-28 w-full object-cover" />
+                    ) : (
+                      <div className="flex h-28 items-center justify-center text-xs text-[#8a7a6a]">ไม่มีรูป</div>
+                    )}
                   </div>
-                  <div className="text-lg font-semibold text-[#3f3328]">{place.name}</div>
-                  <div className="text-sm text-[#74685e]">
-                    {place.district}, {place.province}
-                  </div>
-                  <div className="text-sm leading-7 text-[#6f6257] line-clamp-2">{place.description}</div>
-                  <div className="text-xs text-[#8c7a6a]">
-                    ผู้ส่ง: {place.createdBy?.name || "-"}
-                    {place.createdBy?.email ? ` (${place.createdBy.email})` : ""}
-                  </div>
-                </div>
 
-                <div className="flex flex-col gap-3 md:w-36">
-                  <button
-                    type="button"
-                    onClick={() => approveMutation.mutate(place.id)}
-                    disabled={approveMutation.isPending || rejectMutation.isPending}
-                    className="rounded-full bg-[#2e5a43] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#234634] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    อนุมัติ
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRejectTarget(place.id)}
-                    disabled={approveMutation.isPending || rejectMutation.isPending}
-                    className="rounded-full border border-[#d7b1b1] px-4 py-2.5 text-sm font-semibold text-[#8f4e4e] transition hover:bg-[#fff3f3] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    ปฏิเสธ
-                  </button>
+                  <div className="min-w-0 space-y-2">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="text-xs tracking-[0.22em] text-[#a06840]">{getPlaceCategoryLabel(place.category)}</span>
+                      <span
+                        className={`rounded-full border px-3 py-1 text-[11px] font-semibold tracking-[0.16em] ${
+                          statusBadgeConfig[place.status] || statusBadgeConfig.PENDING
+                        }`}
+                      >
+                        {statusLabelConfig[place.status] || place.status}
+                      </span>
+                      {isInactive ? (
+                        <span className="rounded-full border border-[#e2d5c7] bg-[#f7f1ea] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[#6e6257]">
+                          ปิดการแสดงผลแล้ว
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="text-lg font-semibold text-[#3f3328]">{place.name}</div>
+                    <div className="text-sm text-[#74685e]">
+                      {place.district}, {place.province}
+                    </div>
+                    <div className="text-sm leading-7 text-[#6f6257] line-clamp-2">{place.description}</div>
+                    <div className="text-xs text-[#8c7a6a]">
+                      ผู้ส่ง: {place.createdBy?.name || "-"}
+                      {place.createdBy?.email ? ` (${place.createdBy.email})` : ""}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3 md:w-44">
+                    {isPending && !isInactive ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => approveMutation.mutate(place.id)}
+                          disabled={isBusy}
+                          className="rounded-full bg-[#2e5a43] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#234634] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          อนุมัติ
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRejectTarget(place)}
+                          disabled={isBusy}
+                          className="rounded-full border border-[#d7b1b1] px-4 py-2.5 text-sm font-semibold text-[#8f4e4e] transition hover:bg-[#fff3f3] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          ปฏิเสธ
+                        </button>
+                      </>
+                    ) : null}
+
+                    {isInactive ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="cursor-not-allowed rounded-full border border-[#e2d5c7] bg-[#f7f1ea] px-4 py-2.5 text-sm font-semibold text-[#6e6257]"
+                      >
+                        ปิดการแสดงผลแล้ว
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setDeactivateTarget(place)}
+                        disabled={isBusy}
+                        className="rounded-full border border-[#d6c7b8] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        ปิดการแสดงผล
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : null}
 
@@ -188,8 +265,8 @@ export function AdminPlacesPage() {
           }}
           onConfirm={() =>
             rejectMutation.mutate({
-              placeId: rejectTarget,
-              rejectionReason: rejectionReason.trim()
+              placeId: rejectTarget.id,
+              note: rejectionReason.trim()
             })
           }
         >
@@ -201,6 +278,19 @@ export function AdminPlacesPage() {
             placeholder="เช่น ข้อมูลสถานที่ยังไม่ครบ รูปภาพไม่ชัด หรือพิกัดไม่ถูกต้อง"
           />
         </AdminActionDialog>
+      ) : null}
+
+      {deactivateTarget ? (
+        <AdminActionDialog
+          eyebrow="VISIBILITY CONTROL"
+          title="ยืนยันการปิดการแสดงผลสถานที่นี้"
+          description={`เมื่อยืนยันแล้ว “${deactivateTarget.name}” จะหายจากหน้า public ทันที แต่เจ้าของรายการและแอดมินยังมองเห็นได้ในระบบ`}
+          confirmLabel="ยืนยันการปิดการแสดงผล"
+          confirmPendingLabel="กำลังปิดการแสดงผล..."
+          isPending={deactivateMutation.isPending}
+          onCancel={() => setDeactivateTarget(null)}
+          onConfirm={() => deactivateMutation.mutate(deactivateTarget.id)}
+        />
       ) : null}
     </div>
   );

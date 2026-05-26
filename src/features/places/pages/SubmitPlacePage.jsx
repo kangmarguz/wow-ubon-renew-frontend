@@ -27,6 +27,7 @@ const placeSchema = z.object({
 });
 
 const defaultMapCenter = [15.2448, 104.8472];
+const maxImageCount = 8;
 const defaultDistrict = "เมืองอุบลราชธานี";
 
 function MapLoadingFallback() {
@@ -125,6 +126,14 @@ export function SubmitPlacePage() {
 
   const handleFileChange = (event) => {
     const nextFiles = Array.from(event.target.files || []);
+    const nextTotalCount = existingImages.length + selectedFiles.length + nextFiles.length;
+
+    if (nextTotalCount > maxImageCount) {
+      toast.error(`อัปโหลดรูปได้สูงสุด ${maxImageCount} รูป`);
+      event.target.value = "";
+      return;
+    }
+
     setSelectedFiles((currentFiles) => [...currentFiles, ...nextFiles]);
     event.target.value = "";
   };
@@ -181,6 +190,11 @@ export function SubmitPlacePage() {
 
     if (totalImageCount === 0) {
       toast.error("กรุณาเลือกรูปอย่างน้อย 1 รูป");
+      return;
+    }
+
+    if (totalImageCount > maxImageCount) {
+      toast.error(`อัปโหลดรูปได้สูงสุด ${maxImageCount} รูป`);
       return;
     }
 
@@ -383,6 +397,7 @@ export function SubmitPlacePage() {
                 <p className="mt-2 max-w-md text-sm leading-6 text-[#8b7b6d]">
                   ระบบจะแสดงตัวอย่างรูปให้ดูก่อนบันทึกจริง และคุณสามารถลบรูปที่ไม่ต้องการออกได้
                 </p>
+                <p className="mt-2 text-xs leading-6 text-[#9a7d64]">อัปโหลดได้สูงสุด {maxImageCount} รูป รูปละไม่เกิน 5 MB</p>
                 <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileChange} />
               </label>
 

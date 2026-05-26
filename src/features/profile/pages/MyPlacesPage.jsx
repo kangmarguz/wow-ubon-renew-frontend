@@ -102,7 +102,7 @@ export function MyPlacesPage() {
       <PageIntro
         eyebrow="โปรไฟล์"
         title="สถานที่ของฉัน"
-        description="ติดตามสถานะสถานที่ที่คุณส่งเข้าระบบทั้งหมดได้จากหน้านี้ โดยเน้นให้เห็นชัดว่ารายการไหนเผยแพร่แล้ว รายการไหนกำลังรอตรวจสอบ และรายการไหนต้องกลับไปแก้ไข"
+        description="ติดตามสถานะสถานที่ที่คุณส่งเข้าระบบทั้งหมดได้จากหน้านี้ โดยเน้นให้เห็นชัดว่ารายการไหนเผยแพร่แล้ว รายการไหนกำลังรอตรวจสอบ รายการไหนต้องแก้ไข และรายการไหนถูกปิดการแสดงผลโดยแอดมิน"
       />
 
       <SectionCard
@@ -173,6 +173,7 @@ export function MyPlacesPage() {
               const isRejected = place.status === "REJECTED";
               const isPending = place.status === "PENDING";
               const isApproved = place.status === "APPROVED";
+              const isInactive = place.isActive === false;
               const isExpanded = expandedRejectedId === place.id;
               const isSubmitting = resubmitMutation.isPending && resubmitMutation.variables === place.id;
 
@@ -205,6 +206,11 @@ export function MyPlacesPage() {
                           >
                             {status.label}
                           </span>
+                          {isInactive ? (
+                            <span className="rounded-full border border-[#e2d5c7] bg-[#f7f1ea] px-3 py-1 text-xs font-semibold tracking-[0.14em] text-[#6e6257]">
+                              ถูกปิดโดยแอดมิน
+                            </span>
+                          ) : null}
                         </div>
 
                         <div>
@@ -214,7 +220,11 @@ export function MyPlacesPage() {
                           </div>
                         </div>
 
-                        <div className={`text-sm font-medium ${status.titleClassName}`}>{status.description}</div>
+                        <div className={`text-sm font-medium ${isInactive ? "text-[#7a5e46]" : status.titleClassName}`}>
+                          {isInactive
+                            ? "รายการนี้ถูกปิดการแสดงผลโดยแอดมิน จึงไม่แสดงบนหน้า public แต่ข้อมูลยังอยู่ในระบบ"
+                            : status.description}
+                        </div>
 
                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#8c7a6a]">
                           <span>สร้างเมื่อ {formatDate(place.createdAt)}</span>
@@ -226,12 +236,14 @@ export function MyPlacesPage() {
                     <div className="flex flex-wrap gap-3">
                       {isApproved ? (
                         <>
-                          <Link
-                            to={`/places/${place.slug}`}
-                            className="rounded-full border border-[#c9b7a5] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#5b4737] transition hover:border-[#9a816c] hover:text-[#3f3328]"
-                          >
-                            ดูสถานที่
-                          </Link>
+                          {!isInactive ? (
+                            <Link
+                              to={`/places/${place.slug}`}
+                              className="rounded-full border border-[#c9b7a5] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#5b4737] transition hover:border-[#9a816c] hover:text-[#3f3328]"
+                            >
+                              ดูสถานที่
+                            </Link>
+                          ) : null}
                           <Link
                             to={`/my-places/${place.id}/edit`}
                             className="rounded-full border border-[#b8d4c1] bg-[#edf7ef] px-4 py-2.5 text-sm font-semibold text-[#2f6b41] transition hover:border-[#8fbea0] hover:text-[#255635]"
@@ -246,9 +258,13 @@ export function MyPlacesPage() {
                           <button
                             type="button"
                             disabled
-                            className="cursor-not-allowed rounded-full border border-[#eadbb8] bg-[#fff8e8] px-4 py-2.5 text-sm font-semibold text-[#8a6432] opacity-90"
+                            className={`cursor-not-allowed rounded-full px-4 py-2.5 text-sm font-semibold ${
+                              isInactive
+                                ? "border border-[#e2d5c7] bg-[#f7f1ea] text-[#6e6257]"
+                                : "border border-[#eadbb8] bg-[#fff8e8] text-[#8a6432] opacity-90"
+                            }`}
                           >
-                            รอตรวจสอบ
+                            {isInactive ? "ถูกปิดการแสดงผล" : "รอตรวจสอบ"}
                           </button>
                           <Link
                             to={`/my-places/${place.id}/edit`}
