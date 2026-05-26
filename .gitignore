@@ -36,6 +36,21 @@ dist/
 build/
 
 # ==========================================
+# Prisma ORM 
+# ==========================================
+# ไม่รวมไฟล์ SQLite local database (ถ้าใช้ sqlite)
+*.db
+*.db-journal
+
+# ไม่รวมไฟล์ env ที่อาจจะมี Database Credentials ผูกกับ Prisma
+.env
+.env.local
+
+# (ทางเลือก) หากไม่ต้องการเอาโฟลเดอร์ migration ที่สร้างขึ้นมาเก็บไว้บน git 
+# แต่ปกติแนะนำให้คอมมิตขึ้นไปเพื่อให้ทีมใช้ร่วมกัน เว้นแต่ว่าเป็นโปรเจกต์เทสส่วนตัว
+# /prisma/migrations/
+
+# ==========================================
 # Java / Backend (Maven / Gradle)
 # ==========================================
 # Maven target
@@ -79,17 +94,13 @@ out/
 # Environment Variables & Secrets (CRITICAL)
 # ==========================================
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
 *.env.bak
 
 # ==========================================
 # Databases & Docker
 # ==========================================
 .docker/
-# ถ้านำ database มา run ใน docker-compose และผูก volume ไว้
+# ถ้านำ database มา run ใน docker-compose และผูก volume ไว้ในเครื่อง
 /postgres_data/
 /mysql_data/
 /mongo_data/
