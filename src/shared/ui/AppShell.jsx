@@ -9,8 +9,10 @@ function NavItem({ to, label, end = false }) {
       to={to}
       end={end}
       className={({ isActive }) =>
-        `rounded-full px-4 py-2 text-sm transition ${
-          isActive ? "bg-forest text-white" : "text-ink/70 hover:bg-white/60"
+        `rounded-full px-4 py-2.5 text-sm font-medium transition ${
+          isActive
+            ? "bg-[#3f3328] text-white shadow-[0_10px_18px_rgba(63,51,40,0.14)]"
+            : "text-[#6f6257] hover:bg-white/80 hover:text-[#33281f]"
         }`
       }
     >
@@ -47,26 +49,24 @@ function UserMenu({ user, onLogout }) {
       <button
         type="button"
         onClick={() => setIsOpen((current) => !current)}
-        className={`flex items-center gap-3 rounded-[1.4rem] border px-4 py-2.5 text-left transition ${
+        className={`flex items-center gap-3 rounded-[1.6rem] border px-3.5 py-2.5 text-left transition ${
           isOpen
-            ? "border-[#c8b29d] bg-white shadow-[0_10px_24px_rgba(74,55,37,0.08)]"
-            : "border-transparent bg-white/40 hover:border-[#dfd1c1] hover:bg-white/70"
+            ? "border-[#ccb59f] bg-white shadow-[0_14px_28px_rgba(74,55,37,0.12)]"
+            : "border-white/50 bg-white/58 hover:border-[#ddcebf] hover:bg-white/76"
         }`}
       >
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3e7d9] text-sm font-semibold text-[#5a4737]">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[linear-gradient(180deg,#f5e9dc,#ead9c8)] text-sm font-semibold text-[#5a4737]">
           {user.name?.slice(0, 1)?.toUpperCase() || "U"}
         </div>
         <div className="text-right">
           <div className="text-sm font-semibold text-[#3f3328]">{user.name}</div>
-          <div className="text-xs uppercase tracking-[0.16em] text-[#8c7a6a]">{user.role}</div>
+          <div className="text-[11px] uppercase tracking-[0.16em] text-[#8c7a6a]">{user.role}</div>
         </div>
       </button>
 
       <div
-        className={`absolute right-0 top-[calc(100%+0.75rem)] z-20 w-64 overflow-hidden rounded-[1.4rem] border border-[#e2d5c7] bg-white shadow-[0_18px_40px_rgba(74,55,37,0.12)] transition-all duration-200 ease-out ${
-          isOpen
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none -translate-y-2 opacity-0"
+        className={`absolute right-0 top-[calc(100%+0.85rem)] z-50 w-64 overflow-hidden rounded-[1.5rem] border border-[#e2d5c7] bg-white shadow-[0_22px_48px_rgba(74,55,37,0.14)] transition-all duration-200 ease-out ${
+          isOpen ? "pointer-events-auto translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0"
         }`}
       >
         <div className="border-b border-[#f1e5d7] px-4 py-4">
@@ -131,28 +131,39 @@ export function AppShell() {
   const clearAuth = useAuthStore((state) => state.clearAuth);
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-10 border-b border-ink/10 bg-canvas/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
-          <div>
-            <div className="font-display text-2xl font-semibold text-forest">ว้าวอุบล</div>
-            <div className="text-xs tracking-[0.25em] text-ink/50">แพลตฟอร์มรวมร้านอาหาร ที่พัก และที่เที่ยว</div>
-          </div>
-
-          <nav className="hidden flex-wrap items-center gap-2 md:flex">
-            {publicLinks.map((link) => (
-              <NavItem key={link.to} {...link} />
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            {user ? (
-              <UserMenu user={user} onLogout={clearAuth} />
-            ) : (
-              <div className="flex items-center gap-2">
-                <NavItem to="/login" label="เข้าสู่ระบบ" />
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f7f1e9_0%,#fbf8f3_26%,#f6efe6_100%)]">
+      <header className="sticky top-0 z-40 px-4 pt-4">
+        <div className="mx-auto max-w-6xl">
+          <div className="relative overflow-visible rounded-[2rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,253,249,0.88),rgba(250,244,236,0.78))] px-4 py-4 shadow-[0_16px_38px_rgba(74,55,37,0.08)] backdrop-blur md:px-6">
+            <div className="pointer-events-none absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_top_left,rgba(219,188,157,0.18),transparent_22%),radial-gradient(circle_at_86%_12%,rgba(110,143,121,0.1),transparent_16%)]" />
+            <div className="relative flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <NavLink to="/" className="group inline-flex flex-col">
+                  <div className="font-display text-[1.5rem] leading-none text-[#31261d] transition group-hover:text-[#46372a]">
+                    ว้าวอุบล
+                  </div>
+                  <div className="mt-1 hidden text-[11px] tracking-[0.24em] text-[#8a7a6a] md:block">
+                    แพลตฟอร์มรวมข้อมูลร้านอาหาร ที่พัก และที่เที่ยว
+                  </div>
+                </NavLink>
               </div>
-            )}
+
+              <nav className="hidden items-center gap-2 rounded-full border border-white/70 bg-white/52 p-1.5 shadow-[0_10px_24px_rgba(74,55,37,0.05)] md:flex">
+                {publicLinks.map((link) => (
+                  <NavItem key={link.to} {...link} />
+                ))}
+              </nav>
+
+              <div className="flex items-center gap-3">
+                {user ? (
+                  <UserMenu user={user} onLogout={clearAuth} />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <NavItem to="/login" label="เข้าสู่ระบบ" />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </header>
