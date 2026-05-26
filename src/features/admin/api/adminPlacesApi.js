@@ -27,3 +27,8 @@ export async function deactivateAdminPlace(placeId) {
   const response = await http.patch(`/admin/places/${placeId}/deactivate`);
   return response.data.data.place;
 }
+
+export async function activateAdminPlace(placeId) {
+  const response = await http.patch(`/admin/places/${placeId}/activate`);
+  return response.data.data.place;
+}

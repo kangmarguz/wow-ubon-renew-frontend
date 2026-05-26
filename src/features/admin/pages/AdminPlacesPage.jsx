@@ -9,6 +9,7 @@ import { getPlaceCategoryLabel } from "../../../shared/constants/placeCategories
 import { ProfilePagination } from "../../profile/components/ProfilePagination";
 import { AdminActionDialog } from "../components/AdminActionDialog";
 import {
+  activateAdminPlace,
   approvePendingPlace,
   deactivateAdminPlace,
   fetchAdminPlaces,
@@ -16,6 +17,12 @@ import {
 } from "../api/adminPlacesApi";
 
 const PAGE_SIZE = 10;
+
+const tabs = [
+  { key: "PENDING", label: "รอตรวจสอบ" },
+  { key: "APPROVED", label: "เผยแพร่แล้ว" },
+  { key: "INACTIVE", label: "ปิดการแสดงผลแล้ว" }
+];
 
 const statusBadgeConfig = {
   APPROVED: "border-[#cfe4d4] bg-[#edf7ef] text-[#2f6b41]",
@@ -29,9 +36,23 @@ const statusLabelConfig = {
   REJECTED: "ต้องแก้ไข"
 };
 
+function getFilteredByTab(places, activeTab) {
+  if (activeTab === "PENDING") {
+    return places.filter((place) => place.isActive !== false && place.status === "PENDING");
+  }
+
+  if (activeTab === "APPROVED") {
+    return places.filter((place) => place.isActive !== false && place.status === "APPROVED");
+  }
+
+  return places.filter((place) => place.isActive === false);
+}
+
 export function AdminPlacesPage() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("PENDING");
   const [rejectTarget, setRejectTarget] = useState(null);
+  const [activateTarget, setActivateTarget] = useState(null);
   const [deactivateTarget, setDeactivateTarget] = useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -85,22 +106,45 @@ export function AdminPlacesPage() {
     }
   });
 
+  const activateMutation = useMutation({
+    mutationFn: activateAdminPlace,
+    onSuccess() {
+      toast.success("เปิดการแสดงผลสถานที่แล้ว และย้ายกลับเข้าคิวรอตรวจสอบ");
+      setActivateTarget(null);
+      invalidatePlaceQueries();
+    },
+    onError(mutationError) {
+      toast.error(mutationError?.response?.data?.message || "เปิดการแสดงผลสถานที่ไม่สำเร็จ");
+    }
+  });
+
+  const tabCounts = useMemo(
+    () => ({
+      PENDING: places.filter((place) => place.isActive !== false && place.status === "PENDING").length,
+      APPROVED: places.filter((place) => place.isActive !== false && place.status === "APPROVED").length,
+      INACTIVE: places.filter((place) => place.isActive === false).length
+    }),
+    [places]
+  );
+
+  const visiblePlaces = useMemo(() => getFilteredByTab(places, activeTab), [places, activeTab]);
+
   const filteredPlaces = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
     if (!normalizedSearch) {
-      return places;
+      return visiblePlaces;
     }
 
-    return places.filter((place) => place.name.toLowerCase().includes(normalizedSearch));
-  }, [places, searchTerm]);
+    return visiblePlaces.filter((place) => place.name.toLowerCase().includes(normalizedSearch));
+  }, [visiblePlaces, searchTerm]);
 
   const totalPages = Math.max(1, Math.ceil(filteredPlaces.length / PAGE_SIZE));
   const paginatedPlaces = filteredPlaces.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, activeTab]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -113,7 +157,7 @@ export function AdminPlacesPage() {
       <PageIntro
         eyebrow="แอดมิน"
         title="จัดการสถานที่"
-        description="ตรวจสอบ อนุมัติ ปฏิเสธ และปิดการแสดงผลสถานที่จากหน้าเดียว พร้อมค้นหาตามชื่อและแบ่งหน้า 10 รายการต่อครั้ง"
+        description="แยกคิวสถานที่เป็นหมวดชัดเจนระหว่างรอตรวจสอบ เผยแพร่แล้ว และปิดการแสดงผลแล้ว เพื่อให้สลับบริบทการจัดการได้เร็วขึ้น"
         className="max-w-4xl"
         eyebrowClassName="tracking-[0.28em]"
         titleClassName="text-[2.4rem] leading-tight md:text-[3rem]"
@@ -122,14 +166,43 @@ export function AdminPlacesPage() {
 
       <SectionCard
         title="รายการสถานที่ในระบบ"
-        description="หน้านี้รวมทั้งรายการที่รอตรวจสอบ รายการที่เผยแพร่แล้ว และรายการที่ถูกปิดการแสดงผล เพื่อให้จัดการต่อเนื่องได้จากที่เดียว"
+        description="แต่ละแท็บใช้ search และ pagination ร่วมกัน โดยจะแสดงเฉพาะสถานะที่เกี่ยวข้องกับงานในแท็บนั้น"
         className="border-[#eadfce] bg-[linear-gradient(180deg,rgba(255,253,249,0.98),rgba(250,244,236,0.94))]"
         titleClassName="text-[1.7rem] text-[#3f3328]"
         descriptionClassName="text-[14px] leading-7 text-[#74685e]"
         contentClassName="space-y-4"
       >
+        <div className="flex flex-wrap gap-3">
+          {tabs.map((tab) => {
+            const isActiveTab = activeTab === tab.key;
+            const count = tabCounts[tab.key] || 0;
+
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
+                  isActiveTab
+                    ? "border-[#3f3328] bg-[#3f3328] text-white shadow-[0_10px_18px_rgba(63,51,40,0.14)]"
+                    : "border-[#dacbbc] bg-white/82 text-[#5f5145] hover:border-[#b79c82] hover:bg-white"
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs ${
+                    isActiveTab ? "bg-white/18 text-white" : "bg-[#f3e7da] text-[#816a57]"
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
         <SearchFieldCard
-          label="ค้นหาจากชื่อสถานที่"
+          label={`ค้นหาในแท็บ${tabs.find((tab) => tab.key === activeTab)?.label || ""}`}
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
           placeholder="พิมพ์ชื่อสถานที่ที่ต้องการจัดการ"
@@ -141,21 +214,24 @@ export function AdminPlacesPage() {
           <StateNotice tone="error">{error?.response?.data?.message || "ไม่สามารถดึงรายการสถานที่ได้"}</StateNotice>
         ) : null}
 
-        {!isLoading && !isError && places.length === 0 ? <StateNotice>ตอนนี้ยังไม่มีรายการสถานที่ในระบบ</StateNotice> : null}
+        {!isLoading && !isError && visiblePlaces.length === 0 ? (
+          <StateNotice>ไม่มีรายการในแท็บนี้ตอนนี้</StateNotice>
+        ) : null}
 
-        {!isLoading && !isError && places.length > 0 && filteredPlaces.length === 0 ? (
+        {!isLoading && !isError && visiblePlaces.length > 0 && filteredPlaces.length === 0 ? (
           <StateNotice>ไม่พบสถานที่ที่ตรงกับชื่อที่ค้นหา</StateNotice>
         ) : null}
 
         {!isLoading && !isError && paginatedPlaces.length > 0 ? (
           <div className="space-y-4">
             {paginatedPlaces.map((place) => {
-              const isPending = place.status === "PENDING";
               const isInactive = place.isActive === false;
+              const isPending = place.status === "PENDING";
               const isBusy =
                 approveMutation.isPending ||
                 rejectMutation.isPending ||
-                deactivateMutation.isPending;
+                deactivateMutation.isPending ||
+                activateMutation.isPending;
 
               return (
                 <div
@@ -173,13 +249,15 @@ export function AdminPlacesPage() {
                   <div className="min-w-0 space-y-2">
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="text-xs tracking-[0.22em] text-[#a06840]">{getPlaceCategoryLabel(place.category)}</span>
-                      <span
-                        className={`rounded-full border px-3 py-1 text-[11px] font-semibold tracking-[0.16em] ${
-                          statusBadgeConfig[place.status] || statusBadgeConfig.PENDING
-                        }`}
-                      >
-                        {statusLabelConfig[place.status] || place.status}
-                      </span>
+                      {!isInactive ? (
+                        <span
+                          className={`rounded-full border px-3 py-1 text-[11px] font-semibold tracking-[0.16em] ${
+                            statusBadgeConfig[place.status] || statusBadgeConfig.PENDING
+                          }`}
+                        >
+                          {statusLabelConfig[place.status] || place.status}
+                        </span>
+                      ) : null}
                       {isInactive ? (
                         <span className="rounded-full border border-[#e2d5c7] bg-[#f7f1ea] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[#6e6257]">
                           ปิดการแสดงผลแล้ว
@@ -199,7 +277,7 @@ export function AdminPlacesPage() {
                   </div>
 
                   <div className="flex flex-col gap-3 md:w-44">
-                    {isPending && !isInactive ? (
+                    {activeTab === "PENDING" ? (
                       <>
                         <button
                           type="button"
@@ -217,18 +295,18 @@ export function AdminPlacesPage() {
                         >
                           ปฏิเสธ
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeactivateTarget(place)}
+                          disabled={isBusy}
+                          className="rounded-full border border-[#d6c7b8] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          ปิดการแสดงผล
+                        </button>
                       </>
                     ) : null}
 
-                    {isInactive ? (
-                      <button
-                        type="button"
-                        disabled
-                        className="cursor-not-allowed rounded-full border border-[#e2d5c7] bg-[#f7f1ea] px-4 py-2.5 text-sm font-semibold text-[#6e6257]"
-                      >
-                        ปิดการแสดงผลแล้ว
-                      </button>
-                    ) : (
+                    {activeTab === "APPROVED" ? (
                       <button
                         type="button"
                         onClick={() => setDeactivateTarget(place)}
@@ -237,7 +315,20 @@ export function AdminPlacesPage() {
                       >
                         ปิดการแสดงผล
                       </button>
-                    )}
+                    ) : null}
+
+                    {activeTab === "INACTIVE" ? (
+                      <button
+                        type="button"
+                        onClick={() => setActivateTarget(place)}
+                        disabled={isBusy}
+                        className="rounded-full border border-[#c8d7cd] bg-[#edf7ef] px-4 py-2.5 text-sm font-semibold text-[#2f6b41] transition hover:border-[#97b9a3] hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        เปิดการแสดงผลอีกครั้ง
+                      </button>
+                    ) : null}
+
+                    {!isPending && activeTab === "PENDING" ? null : null}
                   </div>
                 </div>
               );
@@ -290,6 +381,19 @@ export function AdminPlacesPage() {
           isPending={deactivateMutation.isPending}
           onCancel={() => setDeactivateTarget(null)}
           onConfirm={() => deactivateMutation.mutate(deactivateTarget.id)}
+        />
+      ) : null}
+
+      {activateTarget ? (
+        <AdminActionDialog
+          eyebrow="ACTIVATE PLACE"
+          title="ยืนยันการเปิดการแสดงผลสถานที่นี้อีกครั้ง"
+          description={`เมื่อยืนยันแล้ว “${activateTarget.name}” จะถูกเปิดใช้งานอีกครั้ง แต่สถานะจะกลับเป็นรอตรวจสอบก่อน เพื่อให้เจ้าของรายการอัปเดตและส่งตรวจใหม่`}
+          confirmLabel="ยืนยันการเปิดใช้งาน"
+          confirmPendingLabel="กำลังเปิดใช้งาน..."
+          isPending={activateMutation.isPending}
+          onCancel={() => setActivateTarget(null)}
+          onConfirm={() => activateMutation.mutate(activateTarget.id)}
         />
       ) : null}
     </div>
