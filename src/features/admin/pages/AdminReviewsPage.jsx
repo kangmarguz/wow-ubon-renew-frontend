@@ -27,6 +27,7 @@ export function AdminReviewsPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const { data: reviews = [], isLoading, isError, error } = useQuery({
     queryKey: ["admin-reviews"],
     queryFn: fetchAdminReviews
@@ -37,6 +38,7 @@ export function AdminReviewsPage() {
     onSuccess() {
       toast.success("ซ่อนรีวิวเรียบร้อยแล้ว");
       queryClient.invalidateQueries({ queryKey: ["admin-reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
     },
     onError(mutationError) {
       toast.error(mutationError?.response?.data?.message || "ซ่อนรีวิวไม่สำเร็จ");
@@ -47,8 +49,10 @@ export function AdminReviewsPage() {
     mutationFn: deleteAdminReview,
     onSuccess() {
       toast.success("ลบรีวิวเรียบร้อยแล้ว");
+      setDeleteTarget(null);
       queryClient.invalidateQueries({ queryKey: ["admin-reviews"] });
       queryClient.invalidateQueries({ queryKey: ["places"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
     },
     onError(mutationError) {
       toast.error(mutationError?.response?.data?.message || "ลบรีวิวไม่สำเร็จ");
@@ -140,8 +144,7 @@ export function AdminReviewsPage() {
         {!isLoading && !isError && paginatedReviews.length > 0
           ? paginatedReviews.map((review) => {
               const isHidden = review.status === "HIDDEN";
-              const isMutating =
-                hideMutation.isPending || deleteMutation.isPending;
+              const isMutating = hideMutation.isPending || deleteMutation.isPending;
 
               return (
                 <div
@@ -189,7 +192,7 @@ export function AdminReviewsPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => deleteMutation.mutate(review.id)}
+                        onClick={() => setDeleteTarget(review)}
                         disabled={isMutating}
                         className="rounded-full border border-[#d7b1b1] px-4 py-2.5 text-sm font-semibold text-[#8f4e4e] transition hover:bg-[#fff3f3] disabled:cursor-not-allowed disabled:opacity-60"
                       >
@@ -206,6 +209,41 @@ export function AdminReviewsPage() {
           <ProfilePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         ) : null}
       </SectionCard>
+
+      {deleteTarget ? (
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-[#2b2119]/35 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-xl rounded-[1.8rem] border border-[#e2d5c7] bg-white p-6 shadow-[0_24px_60px_rgba(74,55,37,0.18)]">
+            <div className="text-xs tracking-[0.22em] text-[#9a836d]">DELETE REVIEW</div>
+            <h3 className="mt-2 text-2xl font-semibold text-[#3f3328]">ยืนยันการลบรีวิวนี้</h3>
+            <p className="mt-2 text-sm leading-7 text-[#74685e]">
+              หากลบแล้ว รีวิวของ <span className="font-semibold text-[#4b3b2d]">{deleteTarget.user.name}</span> สำหรับสถานที่{" "}
+              <span className="font-semibold text-[#4b3b2d]">{deleteTarget.place.name}</span> จะถูกนำออกจากระบบทันที
+            </p>
+
+            <div className="mt-5 rounded-[1.4rem] border border-[#eadfce] bg-[#fffaf4] p-4 text-sm leading-7 text-[#6f6257]">
+              “{deleteTarget.content}”
+            </div>
+
+            <div className="mt-5 flex flex-col gap-3 md:flex-row md:justify-end">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="rounded-full border border-[#d6c7b8] px-5 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:text-[#4c3b2d]"
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="button"
+                disabled={deleteMutation.isPending}
+                onClick={() => deleteMutation.mutate(deleteTarget.id)}
+                className="rounded-full bg-[#8f4e4e] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#763f3f] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {deleteMutation.isPending ? "กำลังลบ..." : "ยืนยันการลบ"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
