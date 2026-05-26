@@ -1,11 +1,6 @@
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MapContainer, Marker, TileLayer } from "react-leaflet";
 import { useParams } from "react-router-dom";
-import L from "leaflet";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { useAuthStore } from "../../auth/store/useAuthStore";
 import { ReviewEditor } from "../components/ReviewEditor";
 import { PageIntro } from "../../../shared/ui/PageIntro";
@@ -13,15 +8,19 @@ import { SectionCard } from "../../../shared/ui/SectionCard";
 import { getPlaceCategoryLabel } from "../../../shared/constants/placeCategories";
 import { fetchPlaceDetail } from "../api/publicPlacesApi";
 
-const placeMarkerIcon = L.icon({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+const PlaceStaticMap = lazy(() =>
+  import("../components/PlaceStaticMap").then((module) => ({ default: module.PlaceStaticMap }))
+);
+
+function MapLoadingFallback({ heightClassName }) {
+  return (
+    <div
+      className={`flex items-center justify-center bg-[linear-gradient(180deg,#fbf6ef_0%,#f1e7db_100%)] text-sm text-[#7c6f63] ${heightClassName}`}
+    >
+      กำลังโหลดแผนที่...
+    </div>
+  );
+}
 
 function ImageCarousel({ images, placeName }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -40,14 +39,6 @@ function ImageCarousel({ images, placeName }) {
 
   const hasManyImages = images.length > 1;
 
-  const handlePrev = () => {
-    setCurrentIndex((index) => (index === 0 ? images.length - 1 : index - 1));
-  };
-
-  const handleNext = () => {
-    setCurrentIndex((index) => (index === images.length - 1 ? 0 : index + 1));
-  };
-
   return (
     <div className="space-y-4">
       <div className="relative overflow-hidden rounded-[2rem] bg-[#f4ebdf] shadow-[0_20px_50px_rgba(74,55,37,0.12)]">
@@ -62,7 +53,7 @@ function ImageCarousel({ images, placeName }) {
           <>
             <button
               type="button"
-              onClick={handlePrev}
+              onClick={() => setCurrentIndex((index) => (index === 0 ? images.length - 1 : index - 1))}
               className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-xl text-[#3f3328] shadow-lg backdrop-blur transition hover:bg-white"
               aria-label="ดูรูปก่อนหน้า"
             >
@@ -70,7 +61,7 @@ function ImageCarousel({ images, placeName }) {
             </button>
             <button
               type="button"
-              onClick={handleNext}
+              onClick={() => setCurrentIndex((index) => (index === images.length - 1 ? 0 : index + 1))}
               className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-xl text-[#3f3328] shadow-lg backdrop-blur transition hover:bg-white"
               aria-label="ดูรูปถัดไป"
             >
@@ -157,9 +148,7 @@ export function PlaceDetailPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-[1.4rem] border border-[#e2d5c7] bg-white/70 p-4">
               <div className="text-xs tracking-[0.22em] text-[#9a836d]">คะแนนเฉลี่ย</div>
-              <div className="mt-2 text-2xl font-semibold text-[#3f3328]">
-                {Number(place.averageRating || 0).toFixed(1)}
-              </div>
+              <div className="mt-2 text-2xl font-semibold text-[#3f3328]">{Number(place.averageRating || 0).toFixed(1)}</div>
               <div className="mt-1 text-sm text-[#74685e]">{place.reviewCount || 0} รีวิว</div>
             </div>
 
@@ -191,18 +180,9 @@ export function PlaceDetailPage() {
           contentClassName="space-y-4"
         >
           <div className="overflow-hidden rounded-[1.8rem] border border-[#d7c5b4]">
-            <MapContainer
-              center={[place.latitude, place.longitude]}
-              zoom={13}
-              scrollWheelZoom
-              className="h-[360px] w-full"
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <Marker position={[place.latitude, place.longitude]} icon={placeMarkerIcon} />
-            </MapContainer>
+            <Suspense fallback={<MapLoadingFallback heightClassName="h-[360px] w-full" />}>
+              <PlaceStaticMap latitude={place.latitude} longitude={place.longitude} />
+            </Suspense>
           </div>
 
           <div className="rounded-[1.4rem] border border-[#e2d5c7] bg-white/70 p-4 text-sm leading-7 text-[#6f6257]">
@@ -220,11 +200,7 @@ export function PlaceDetailPage() {
         descriptionClassName="text-[14px] leading-7 text-[#74685e]"
         contentClassName="space-y-4"
       >
-        <ReviewEditor
-          place={place}
-          existingReview={existingReview}
-          queryKeysToInvalidate={[["place-detail", place.slug], ["places"], ["my-reviews"]]}
-        />
+        <ReviewEditor place={place} existingReview={existingReview} queryKeysToInvalidate={[["place-detail", place.slug], ["places"], ["my-reviews"]]} />
 
         {place.reviews?.length > 0 ? (
           place.reviews.map((review) => (
@@ -233,9 +209,7 @@ export function PlaceDetailPage() {
                 <div className="font-semibold text-[#3f3328]">
                   {review.user.name}
                   {review.user.id === user?.id ? (
-                    <span className="ml-2 rounded-full bg-[#efe2d4] px-2.5 py-1 text-xs font-medium text-[#7b6048]">
-                      รีวิวของคุณ
-                    </span>
+                    <span className="ml-2 rounded-full bg-[#efe2d4] px-2.5 py-1 text-xs font-medium text-[#7b6048]">รีวิวของคุณ</span>
                   ) : null}
                 </div>
                 <div className="text-sm text-[#74685e]">คะแนน: {review.rating}/5</div>

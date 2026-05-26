@@ -1,20 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import L from "leaflet";
-import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
 import { toast } from "react-toastify";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SectionCard } from "../../../shared/ui/SectionCard";
 import { ubonDistricts } from "../../../shared/constants/ubonDistricts";
 import { updatePlace, createPlace, uploadPlaceImages } from "../api/placesApi";
 import { fetchMyPlaceDetail } from "../../profile/api/myPlacesApi";
+
+const PlaceLocationPickerMap = lazy(() =>
+  import("../components/PlaceLocationPickerMap").then((module) => ({ default: module.PlaceLocationPickerMap }))
+);
 
 const placeSchema = z.object({
   name: z.string().min(2),
@@ -30,31 +29,12 @@ const placeSchema = z.object({
 const defaultMapCenter = [15.2448, 104.8472];
 const defaultDistrict = "เมืองอุบลราชธานี";
 
-const placeMarkerIcon = L.icon({
-  iconRetinaUrl: markerIcon2x,
-  iconUrl: markerIcon,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-function LocationPicker({ markerPosition, onPick }) {
-  useMapEvents({
-    click(event) {
-      onPick({
-        lat: Number(event.latlng.lat.toFixed(6)),
-        lng: Number(event.latlng.lng.toFixed(6))
-      });
-    }
-  });
-
-  if (!markerPosition) {
-    return null;
-  }
-
-  return <Marker position={[markerPosition.lat, markerPosition.lng]} icon={placeMarkerIcon} />;
+function MapLoadingFallback() {
+  return (
+    <div className="flex h-[420px] w-full items-center justify-center bg-[linear-gradient(180deg,#fbf6ef_0%,#f1e7db_100%)] text-sm text-[#7c6f63]">
+      กำลังโหลดแผนที่...
+    </div>
+  );
 }
 
 export function SubmitPlacePage() {
@@ -297,9 +277,7 @@ export function SubmitPlacePage() {
         <div className="rounded-[1.6rem] border border-[#ebc8c8] bg-[linear-gradient(180deg,rgba(255,242,242,0.96),rgba(255,250,250,1))] p-5">
           <div className="text-xs tracking-[0.22em] text-[#9a4b4b]">REJECTED STATUS</div>
           <div className="mt-2 text-lg font-semibold text-[#7b3f3f]">รายการนี้ถูกปฏิเสธและรอให้คุณแก้ไขข้อมูล</div>
-          <div className="mt-2 text-sm leading-7 text-[#6f6257]">
-            {editingPlace.rejectionReason || "ยังไม่มีข้อความเหตุผลจากระบบ"}
-          </div>
+          <div className="mt-2 text-sm leading-7 text-[#6f6257]">{editingPlace.rejectionReason || "ยังไม่มีข้อความเหตุผลจากระบบ"}</div>
         </div>
       ) : null}
 
@@ -307,9 +285,7 @@ export function SubmitPlacePage() {
         <div className="rounded-[1.6rem] border border-[#eadbb8] bg-[linear-gradient(180deg,rgba(255,248,230,0.95),rgba(255,252,245,1))] p-5">
           <div className="text-xs tracking-[0.22em] text-[#8a6432]">PENDING STATUS</div>
           <div className="mt-2 text-lg font-semibold text-[#8a6432]">รายการนี้อยู่ระหว่างการตรวจสอบ</div>
-          <div className="mt-2 text-sm leading-7 text-[#6f6257]">
-            คุณยังสามารถแก้ไขรายละเอียดได้จนกว่าจะมีการอนุมัติจากแอดมิน
-          </div>
+          <div className="mt-2 text-sm leading-7 text-[#6f6257]">คุณยังสามารถแก้ไขรายละเอียดได้จนกว่าจะมีการอนุมัติจากแอดมิน</div>
         </div>
       ) : null}
 
@@ -402,9 +378,7 @@ export function SubmitPlacePage() {
               </div>
 
               <label className="flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-[1.8rem] border border-dashed border-[#d7c5b4] bg-[linear-gradient(180deg,#fffdf9_0%,#f8f1e8_100%)] px-6 text-center transition hover:border-[#b39478] hover:bg-[#fffaf4]">
-                <div className="rounded-full border border-[#dcc8b6] bg-white px-4 py-2 text-xs tracking-[0.2em] text-[#866c57]">
-                  UPLOAD AREA
-                </div>
+                <div className="rounded-full border border-[#dcc8b6] bg-white px-4 py-2 text-xs tracking-[0.2em] text-[#866c57]">UPLOAD AREA</div>
                 <div className="mt-5 text-lg font-semibold text-[#4d3d30]">ลากไฟล์มาวางหรือคลิกเพื่อเลือกรูป</div>
                 <p className="mt-2 max-w-md text-sm leading-6 text-[#8b7b6d]">
                   ระบบจะแสดงตัวอย่างรูปให้ดูก่อนบันทึกจริง และคุณสามารถลบรูปที่ไม่ต้องการออกได้
@@ -455,9 +429,7 @@ export function SubmitPlacePage() {
                         <div className="space-y-3 p-4">
                           <div>
                             <div className="truncate text-sm font-semibold text-[#4d3d30]">{file.name}</div>
-                            <div className="mt-1 text-xs text-[#8a7a6a]">
-                              {(file.size / 1024 / 1024).toFixed(2)} MB
-                            </div>
+                            <div className="mt-1 text-xs text-[#8a7a6a]">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
                           </div>
                           <button
                             type="button"
@@ -476,13 +448,23 @@ export function SubmitPlacePage() {
 
             <div className="space-y-4 rounded-[1.6rem] border border-[#eadfce] bg-[linear-gradient(180deg,rgba(255,252,247,0.96),rgba(250,244,236,0.9))] p-4 md:p-5">
               <div className="rounded-[1.3rem] border border-white/70 bg-white/55 px-4 py-3 text-sm leading-6 text-[#7b6f64]">
-                {isEditMode
-                  ? editingPlace?.status === "APPROVED"
-                    ? <>เมื่อบันทึกแล้ว ระบบจะใช้ข้อมูลล่าสุดของคุณและเปลี่ยนสถานะรายการกลับเป็น <span className="font-semibold text-[#4c3b2d]">รอตรวจสอบ</span></>
-                    : editingPlace?.status === "REJECTED"
-                      ? <>เมื่อบันทึกแล้ว รายการนี้จะถูกส่งกลับเข้าสถานะ <span className="font-semibold text-[#4c3b2d]">รอตรวจสอบ</span> ทันที</>
-                      : "เมื่อบันทึกแล้ว ระบบจะใช้ข้อมูลและชุดรูปภาพล่าสุดตามที่คุณแก้ไขไว้ในฟอร์มนี้"
-                  : <>เมื่อส่งแล้ว รายการจะเข้าสู่สถานะ <span className="font-semibold text-[#4c3b2d]">รอตรวจสอบ</span> ก่อนเผยแพร่บนเว็บไซต์</>}
+                {isEditMode ? (
+                  editingPlace?.status === "APPROVED" ? (
+                    <>
+                      เมื่อบันทึกแล้ว ระบบจะใช้ข้อมูลล่าสุดของคุณและเปลี่ยนสถานะรายการกลับเป็น <span className="font-semibold text-[#4c3b2d]">รอตรวจสอบ</span>
+                    </>
+                  ) : editingPlace?.status === "REJECTED" ? (
+                    <>
+                      เมื่อบันทึกแล้ว รายการนี้จะถูกส่งกลับเข้าสู่สถานะ <span className="font-semibold text-[#4c3b2d]">รอตรวจสอบ</span> ทันที
+                    </>
+                  ) : (
+                    "เมื่อบันทึกแล้ว ระบบจะใช้ข้อมูลและชุดรูปภาพล่าสุดตามที่คุณแก้ไขไว้ในฟอร์มนี้"
+                  )
+                ) : (
+                  <>
+                    เมื่อส่งแล้ว รายการจะเข้าสู่สถานะ <span className="font-semibold text-[#4c3b2d]">รอตรวจสอบ</span> ก่อนเผยแพร่บนเว็บไซต์
+                  </>
+                )}
               </div>
 
               <div className="rounded-[1.35rem] border border-[#e3d6c8] bg-white px-4 py-4 shadow-[0_10px_24px_rgba(74,55,37,0.06)]">
@@ -524,19 +506,13 @@ export function SubmitPlacePage() {
             contentClassName="space-y-4"
           >
             <div className="overflow-hidden rounded-[1.8rem] border border-[#d7c5b4]">
-              <MapContainer
-                key={`${resetLocationTarget.lat}-${resetLocationTarget.lng}-${isEditMode ? "edit" : "create"}`}
-                center={[markerPosition.lat, markerPosition.lng]}
-                zoom={11}
-                scrollWheelZoom
-                className="h-[420px] w-full"
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              <Suspense fallback={<MapLoadingFallback />}>
+                <PlaceLocationPickerMap
+                  mapKey={`${resetLocationTarget.lat}-${resetLocationTarget.lng}-${isEditMode ? "edit" : "create"}`}
+                  markerPosition={markerPosition}
+                  onPick={handlePickLocation}
                 />
-                <LocationPicker markerPosition={markerPosition} onPick={handlePickLocation} />
-              </MapContainer>
+              </Suspense>
             </div>
 
             <div className="rounded-[1.4rem] border border-[#e2d5c7] bg-white/70 p-4">
