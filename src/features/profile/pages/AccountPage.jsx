@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { updatePassword, updateProfile } from "../../auth/api/authApi";
 import { useAuthStore } from "../../auth/store/useAuthStore";
 import { PageIntro } from "../../../shared/ui/PageIntro";
+import { PasswordField } from "../../../shared/ui/PasswordField";
 import { SectionCard } from "../../../shared/ui/SectionCard";
 
 const profileSchema = z.object({
@@ -115,9 +116,7 @@ export function AccountPage() {
                   className="w-full rounded-[1.2rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3 text-sm text-[#43362c] outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
                   {...registerProfile("name")}
                 />
-                {profileErrors.name ? (
-                  <span className="mt-1 block text-sm text-red-600">{profileErrors.name.message}</span>
-                ) : null}
+                {profileErrors.name ? <span className="mt-1 block text-sm text-red-600">{profileErrors.name.message}</span> : null}
               </label>
 
               <button
@@ -153,41 +152,29 @@ export function AccountPage() {
                 }
               })}
             >
-              <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[#5b4a3b]">รหัสผ่านปัจจุบัน</span>
-                <input
-                  type="password"
-                  className="w-full rounded-[1.2rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3 text-sm text-[#43362c] outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
-                  {...registerPassword("currentPassword")}
-                />
-                {passwordErrors.currentPassword ? (
-                  <span className="mt-1 block text-sm text-red-600">{passwordErrors.currentPassword.message}</span>
-                ) : null}
-              </label>
+              <PasswordField
+                label="รหัสผ่านปัจจุบัน"
+                error={passwordErrors.currentPassword?.message}
+                inputClassName="w-full rounded-[1.2rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3 text-sm text-[#43362c] outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
+                inputProps={registerPassword("currentPassword")}
+                autoComplete="current-password"
+              />
 
-              <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[#5b4a3b]">รหัสผ่านใหม่</span>
-                <input
-                  type="password"
-                  className="w-full rounded-[1.2rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3 text-sm text-[#43362c] outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
-                  {...registerPassword("newPassword")}
-                />
-                {passwordErrors.newPassword ? (
-                  <span className="mt-1 block text-sm text-red-600">{passwordErrors.newPassword.message}</span>
-                ) : null}
-              </label>
+              <PasswordField
+                label="รหัสผ่านใหม่"
+                error={passwordErrors.newPassword?.message}
+                inputClassName="w-full rounded-[1.2rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3 text-sm text-[#43362c] outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
+                inputProps={registerPassword("newPassword")}
+                autoComplete="new-password"
+              />
 
-              <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[#5b4a3b]">ยืนยันรหัสผ่านใหม่</span>
-                <input
-                  type="password"
-                  className="w-full rounded-[1.2rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3 text-sm text-[#43362c] outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
-                  {...registerPassword("confirmNewPassword")}
-                />
-                {passwordErrors.confirmNewPassword ? (
-                  <span className="mt-1 block text-sm text-red-600">{passwordErrors.confirmNewPassword.message}</span>
-                ) : null}
-              </label>
+              <PasswordField
+                label="ยืนยันรหัสผ่านใหม่"
+                error={passwordErrors.confirmNewPassword?.message}
+                inputClassName="w-full rounded-[1.2rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3 text-sm text-[#43362c] outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
+                inputProps={registerPassword("confirmNewPassword")}
+                autoComplete="new-password"
+              />
 
               <button
                 type="submit"

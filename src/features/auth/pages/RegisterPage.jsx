@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { PageIntro } from "../../../shared/ui/PageIntro";
+import { PasswordField } from "../../../shared/ui/PasswordField";
 import { SectionCard } from "../../../shared/ui/SectionCard";
 import { registerUser } from "../api/authApi";
 
@@ -81,23 +82,21 @@ export function RegisterPage() {
             {errors.email ? <span className="mt-1 block text-sm text-red-600">{errors.email.message}</span> : null}
           </label>
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold">รหัสผ่าน</span>
-            <input type="password" className="w-full rounded-2xl border border-ink/10 px-4 py-3" {...register("password")} />
-            {errors.password ? <span className="mt-1 block text-sm text-red-600">{errors.password.message}</span> : null}
-          </label>
+          <PasswordField
+            label="รหัสผ่าน"
+            error={errors.password?.message}
+            inputClassName="w-full rounded-2xl border border-ink/10 px-4 py-3"
+            inputProps={register("password")}
+            autoComplete="new-password"
+          />
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold">ยืนยันรหัสผ่าน</span>
-            <input
-              type="password"
-              className="w-full rounded-2xl border border-ink/10 px-4 py-3"
-              {...register("confirmPassword")}
-            />
-            {errors.confirmPassword ? (
-              <span className="mt-1 block text-sm text-red-600">{errors.confirmPassword.message}</span>
-            ) : null}
-          </label>
+          <PasswordField
+            label="ยืนยันรหัสผ่าน"
+            error={errors.confirmPassword?.message}
+            inputClassName="w-full rounded-2xl border border-ink/10 px-4 py-3"
+            inputProps={register("confirmPassword")}
+            autoComplete="new-password"
+          />
 
           <button
             type="submit"

@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SearchFieldCard } from "../../../shared/ui/SearchFieldCard";
 import { SectionCard } from "../../../shared/ui/SectionCard";
 import { StateNotice } from "../../../shared/ui/StateNotice";
-import { getPlaceCategoryLabel } from "../../../shared/constants/placeCategories";
 import { ProfilePagination } from "../../profile/components/ProfilePagination";
+import { useProfilePagination } from "../../profile/hooks/useProfilePagination";
 import { AdminActionDialog } from "../components/AdminActionDialog";
+import { AdminPlaceListItem } from "../components/AdminPlaceListItem";
+import { AdminPlacesTabs } from "../components/AdminPlacesTabs";
 import {
   activateAdminPlace,
   approvePendingPlace,
@@ -15,38 +17,13 @@ import {
   fetchAdminPlaces,
   rejectPendingPlace
 } from "../api/adminPlacesApi";
-
-const PAGE_SIZE = 10;
-
-const tabs = [
-  { key: "PENDING", label: "รอตรวจสอบ" },
-  { key: "APPROVED", label: "เผยแพร่แล้ว" },
-  { key: "INACTIVE", label: "ปิดการแสดงผลแล้ว" }
-];
-
-const statusBadgeConfig = {
-  APPROVED: "border-[#cfe4d4] bg-[#edf7ef] text-[#2f6b41]",
-  PENDING: "border-[#eadbb8] bg-[#fff6df] text-[#8a6432]",
-  REJECTED: "border-[#ebc8c8] bg-[#fff1f1] text-[#9a4b4b]"
-};
-
-const statusLabelConfig = {
-  APPROVED: "เผยแพร่แล้ว",
-  PENDING: "รอตรวจสอบ",
-  REJECTED: "ต้องแก้ไข"
-};
-
-function getFilteredByTab(places, activeTab) {
-  if (activeTab === "PENDING") {
-    return places.filter((place) => place.isActive !== false && place.status === "PENDING");
-  }
-
-  if (activeTab === "APPROVED") {
-    return places.filter((place) => place.isActive !== false && place.status === "APPROVED");
-  }
-
-  return places.filter((place) => place.isActive === false);
-}
+import {
+  ADMIN_PLACES_PAGE_SIZE,
+  getAdminPlacesEmptyMessage,
+  getAdminPlaceTabCounts,
+  getFilteredAdminPlacesByTab,
+  searchAdminPlaces
+} from "../lib/adminPlaces";
 
 export function AdminPlacesPage() {
   const queryClient = useQueryClient();
@@ -56,19 +33,18 @@ export function AdminPlacesPage() {
   const [deactivateTarget, setDeactivateTarget] = useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const { data: places = [], isLoading, isError, error } = useQuery({
     queryKey: ["admin-places"],
     queryFn: fetchAdminPlaces
   });
 
-  const invalidatePlaceQueries = () => {
+  function invalidatePlaceQueries() {
     queryClient.invalidateQueries({ queryKey: ["admin-places"] });
     queryClient.invalidateQueries({ queryKey: ["admin-pending-places"] });
     queryClient.invalidateQueries({ queryKey: ["places"] });
     queryClient.invalidateQueries({ queryKey: ["admin-dashboard"] });
     queryClient.invalidateQueries({ queryKey: ["my-places"] });
-  };
+  }
 
   const approveMutation = useMutation({
     mutationFn: approvePendingPlace,
@@ -118,39 +94,22 @@ export function AdminPlacesPage() {
     }
   });
 
-  const tabCounts = useMemo(
-    () => ({
-      PENDING: places.filter((place) => place.isActive !== false && place.status === "PENDING").length,
-      APPROVED: places.filter((place) => place.isActive !== false && place.status === "APPROVED").length,
-      INACTIVE: places.filter((place) => place.isActive === false).length
-    }),
-    [places]
-  );
+  const tabCounts = useMemo(() => getAdminPlaceTabCounts(places), [places]);
+  const visiblePlaces = useMemo(() => getFilteredAdminPlacesByTab(places, activeTab), [places, activeTab]);
+  const filteredPlaces = useMemo(() => searchAdminPlaces(visiblePlaces, searchTerm), [visiblePlaces, searchTerm]);
+  const emptyMessage = getAdminPlacesEmptyMessage(visiblePlaces, filteredPlaces);
+  const {
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    paginatedItems: paginatedPlaces
+  } = useProfilePagination(filteredPlaces, ADMIN_PLACES_PAGE_SIZE, [searchTerm, activeTab]);
 
-  const visiblePlaces = useMemo(() => getFilteredByTab(places, activeTab), [places, activeTab]);
-
-  const filteredPlaces = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
-
-    if (!normalizedSearch) {
-      return visiblePlaces;
-    }
-
-    return visiblePlaces.filter((place) => place.name.toLowerCase().includes(normalizedSearch));
-  }, [visiblePlaces, searchTerm]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredPlaces.length / PAGE_SIZE));
-  const paginatedPlaces = filteredPlaces.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, activeTab]);
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
+  const isBusy =
+    approveMutation.isPending ||
+    rejectMutation.isPending ||
+    deactivateMutation.isPending ||
+    activateMutation.isPending;
 
   return (
     <div className="space-y-8">
@@ -172,167 +131,33 @@ export function AdminPlacesPage() {
         descriptionClassName="text-[14px] leading-7 text-[#74685e]"
         contentClassName="space-y-4"
       >
-        <div className="flex flex-wrap gap-3">
-          {tabs.map((tab) => {
-            const isActiveTab = activeTab === tab.key;
-            const count = tabCounts[tab.key] || 0;
-
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key)}
-                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition ${
-                  isActiveTab
-                    ? "border-[#3f3328] bg-[#3f3328] text-white shadow-[0_10px_18px_rgba(63,51,40,0.14)]"
-                    : "border-[#dacbbc] bg-white/82 text-[#5f5145] hover:border-[#b79c82] hover:bg-white"
-                }`}
-              >
-                <span>{tab.label}</span>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs ${
-                    isActiveTab ? "bg-white/18 text-white" : "bg-[#f3e7da] text-[#816a57]"
-                  }`}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        <AdminPlacesTabs activeTab={activeTab} tabCounts={tabCounts} onTabChange={setActiveTab} />
 
         <SearchFieldCard
-          label={`ค้นหาในแท็บ${tabs.find((tab) => tab.key === activeTab)?.label || ""}`}
+          label={`ค้นหาในแท็บ${tabCounts ? { PENDING: "รอตรวจสอบ", APPROVED: "เผยแพร่แล้ว", INACTIVE: "ปิดการแสดงผลแล้ว" }[activeTab] : ""}`}
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
           placeholder="พิมพ์ชื่อสถานที่ที่ต้องการจัดการ"
         />
 
         {isLoading ? <StateNotice>กำลังโหลดรายการสถานที่...</StateNotice> : null}
-
-        {isError ? (
-          <StateNotice tone="error">{error?.response?.data?.message || "ไม่สามารถดึงรายการสถานที่ได้"}</StateNotice>
-        ) : null}
-
-        {!isLoading && !isError && visiblePlaces.length === 0 ? (
-          <StateNotice>ไม่มีรายการในแท็บนี้ตอนนี้</StateNotice>
-        ) : null}
-
-        {!isLoading && !isError && visiblePlaces.length > 0 && filteredPlaces.length === 0 ? (
-          <StateNotice>ไม่พบสถานที่ที่ตรงกับชื่อที่ค้นหา</StateNotice>
-        ) : null}
+        {isError ? <StateNotice tone="error">{error?.response?.data?.message || "ไม่สามารถดึงรายการสถานที่ได้"}</StateNotice> : null}
+        {!isLoading && !isError && emptyMessage ? <StateNotice>{emptyMessage}</StateNotice> : null}
 
         {!isLoading && !isError && paginatedPlaces.length > 0 ? (
           <div className="space-y-4">
-            {paginatedPlaces.map((place) => {
-              const isInactive = place.isActive === false;
-              const isPending = place.status === "PENDING";
-              const isBusy =
-                approveMutation.isPending ||
-                rejectMutation.isPending ||
-                deactivateMutation.isPending ||
-                activateMutation.isPending;
-
-              return (
-                <div
-                  key={place.id}
-                  className="grid gap-4 rounded-[1.6rem] border border-[#e4d7ca] bg-white/92 p-5 shadow-[0_10px_24px_rgba(74,55,37,0.05)] md:grid-cols-[112px_minmax(0,1fr)_auto]"
-                >
-                  <div className="overflow-hidden rounded-[1.2rem] bg-[#f4ebdf]">
-                    {place.images?.[0]?.url ? (
-                      <img src={place.images[0].url} alt={place.name} className="h-28 w-full object-cover" />
-                    ) : (
-                      <div className="flex h-28 items-center justify-center text-xs text-[#8a7a6a]">ไม่มีรูป</div>
-                    )}
-                  </div>
-
-                  <div className="min-w-0 space-y-2">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className="text-xs tracking-[0.22em] text-[#a06840]">{getPlaceCategoryLabel(place.category)}</span>
-                      {!isInactive ? (
-                        <span
-                          className={`rounded-full border px-3 py-1 text-[11px] font-semibold tracking-[0.16em] ${
-                            statusBadgeConfig[place.status] || statusBadgeConfig.PENDING
-                          }`}
-                        >
-                          {statusLabelConfig[place.status] || place.status}
-                        </span>
-                      ) : null}
-                      {isInactive ? (
-                        <span className="rounded-full border border-[#e2d5c7] bg-[#f7f1ea] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[#6e6257]">
-                          ปิดการแสดงผลแล้ว
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <div className="text-lg font-semibold text-[#3f3328]">{place.name}</div>
-                    <div className="text-sm text-[#74685e]">
-                      {place.district}, {place.province}
-                    </div>
-                    <div className="text-sm leading-7 text-[#6f6257] line-clamp-2">{place.description}</div>
-                    <div className="text-xs text-[#8c7a6a]">
-                      ผู้ส่ง: {place.createdBy?.name || "-"}
-                      {place.createdBy?.email ? ` (${place.createdBy.email})` : ""}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-3 md:w-44">
-                    {activeTab === "PENDING" ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => approveMutation.mutate(place.id)}
-                          disabled={isBusy}
-                          className="rounded-full bg-[#2e5a43] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#234634] disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          อนุมัติ
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setRejectTarget(place)}
-                          disabled={isBusy}
-                          className="rounded-full border border-[#d7b1b1] px-4 py-2.5 text-sm font-semibold text-[#8f4e4e] transition hover:bg-[#fff3f3] disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          ปฏิเสธ
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeactivateTarget(place)}
-                          disabled={isBusy}
-                          className="rounded-full border border-[#d6c7b8] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d] disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          ปิดการแสดงผล
-                        </button>
-                      </>
-                    ) : null}
-
-                    {activeTab === "APPROVED" ? (
-                      <button
-                        type="button"
-                        onClick={() => setDeactivateTarget(place)}
-                        disabled={isBusy}
-                        className="rounded-full border border-[#d6c7b8] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d] disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        ปิดการแสดงผล
-                      </button>
-                    ) : null}
-
-                    {activeTab === "INACTIVE" ? (
-                      <button
-                        type="button"
-                        onClick={() => setActivateTarget(place)}
-                        disabled={isBusy}
-                        className="rounded-full border border-[#c8d7cd] bg-[#edf7ef] px-4 py-2.5 text-sm font-semibold text-[#2f6b41] transition hover:border-[#97b9a3] hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        เปิดการแสดงผลอีกครั้ง
-                      </button>
-                    ) : null}
-
-                    {!isPending && activeTab === "PENDING" ? null : null}
-                  </div>
-                </div>
-              );
-            })}
+            {paginatedPlaces.map((place) => (
+              <AdminPlaceListItem
+                key={place.id}
+                place={place}
+                activeTab={activeTab}
+                isBusy={isBusy}
+                onApprove={() => approveMutation.mutate(place.id)}
+                onReject={() => setRejectTarget(place)}
+                onDeactivate={() => setDeactivateTarget(place)}
+                onActivate={() => setActivateTarget(place)}
+              />
+            ))}
           </div>
         ) : null}
 
