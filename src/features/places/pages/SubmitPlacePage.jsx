@@ -485,12 +485,12 @@ export function SubmitPlacePage() {
                   : <>เมื่อส่งแล้ว รายการจะเข้าสู่สถานะ <span className="font-semibold text-[#4c3b2d]">รอตรวจสอบ</span> ก่อนเผยแพร่บนเว็บไซต์</>}
               </div>
 
-              <div className="flex justify-end">
-                <div className="flex w-full flex-col-reverse gap-3 sm:w-auto sm:flex-row sm:items-center">
+              <div className="rounded-[1.35rem] border border-[#e3d6c8] bg-white px-4 py-4 shadow-[0_10px_24px_rgba(74,55,37,0.06)]">
+                <div className="flex w-full flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
                   {isEditMode ? (
                     <Link
                       to="/my-places"
-                      className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-[#d7c5b4] bg-white/90 px-6 py-3 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d]"
+                      className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-[#d7c5b4] bg-white/90 px-5 py-3 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d]"
                     >
                       ย้อนกลับ
                     </Link>
