@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Shield, ShieldCheck, UserRound, UsersRound } from "lucide-react";
 import { toast } from "react-toastify";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SectionCard } from "../../../shared/ui/SectionCard";
@@ -51,60 +52,65 @@ export function AdminUsersPage() {
         descriptionClassName="text-[14px] leading-7 text-[#74685e]"
         contentClassName="space-y-4"
       >
-        {isLoading ? (
-          <StateNotice>กำลังโหลดผู้ใช้...</StateNotice>
-        ) : null}
+        {isLoading ? <StateNotice>กำลังโหลดผู้ใช้...</StateNotice> : null}
 
-        {isError ? (
-          <StateNotice tone="error">{error?.response?.data?.message || "ไม่สามารถดึงรายการผู้ใช้ได้"}</StateNotice>
-        ) : null}
+        {isError ? <StateNotice tone="error">{error?.response?.data?.message || "ไม่สามารถดึงรายการผู้ใช้ได้"}</StateNotice> : null}
 
-        {!isLoading && !isError && users.length === 0 ? (
-          <StateNotice>ยังไม่มีผู้ใช้ในระบบ</StateNotice>
-        ) : null}
+        {!isLoading && !isError && users.length === 0 ? <StateNotice>ยังไม่มีผู้ใช้ในระบบ</StateNotice> : null}
 
         {!isLoading && !isError && users.length > 0 ? (
           <div className="overflow-hidden rounded-[1.7rem] border border-[#e5d8cb] bg-white/92 shadow-[0_10px_24px_rgba(74,55,37,0.05)]">
-            {users.map((user, index) => (
-              <div
-                key={user.id}
-                className={`flex flex-col gap-4 px-5 py-4 md:flex-row md:items-center md:justify-between ${
-                  index !== users.length - 1 ? "border-b border-[#efe4d8]" : ""
-                }`}
-              >
-                <div className="min-w-0 space-y-2">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="text-base font-semibold text-[#3f3328]">{user.name}</div>
-                    <span
-                      className={`rounded-full border px-3 py-1 text-[11px] font-semibold tracking-[0.16em] ${getRoleBadgeClassName(
-                        user.role
-                      )}`}
-                    >
-                      {user.role}
-                    </span>
-                  </div>
-                  <div className="text-sm text-[#74685e]">{user.email}</div>
-                </div>
+            {users.map((user, index) => {
+              const isAdmin = user.role === "ADMIN";
 
-                <div className="flex items-center gap-3">
-                  <label className="text-xs font-semibold tracking-[0.16em] text-[#8f7d6d]">ROLE</label>
-                  <select
-                    value={user.role}
-                    onChange={(event) =>
-                      updateRoleMutation.mutate({
-                        userId: user.id,
-                        role: event.target.value
-                      })
-                    }
-                    disabled={updateRoleMutation.isPending}
-                    className="rounded-[1rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-2.5 text-sm text-[#43362c] outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <option value="USER">USER</option>
-                    <option value="ADMIN">ADMIN</option>
-                  </select>
+              return (
+                <div
+                  key={user.id}
+                  className={`flex flex-col gap-4 px-5 py-4 md:flex-row md:items-center md:justify-between ${
+                    index !== users.length - 1 ? "border-b border-[#efe4d8]" : ""
+                  }`}
+                >
+                  <div className="min-w-0 space-y-2">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="inline-flex items-center gap-2 text-base font-semibold text-[#3f3328]">
+                        <UserRound size={18} className="text-[#8c7a6a]" aria-hidden="true" />
+                        {user.name}
+                      </div>
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold tracking-[0.16em] ${getRoleBadgeClassName(
+                          user.role
+                        )}`}
+                      >
+                        {isAdmin ? <ShieldCheck size={13} aria-hidden="true" /> : <UsersRound size={13} aria-hidden="true" />}
+                        {user.role}
+                      </span>
+                    </div>
+                    <div className="text-sm text-[#74685e]">{user.email}</div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <label className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-[0.16em] text-[#8f7d6d]">
+                      <Shield size={13} aria-hidden="true" />
+                      ROLE
+                    </label>
+                    <select
+                      value={user.role}
+                      onChange={(event) =>
+                        updateRoleMutation.mutate({
+                          userId: user.id,
+                          role: event.target.value
+                        })
+                      }
+                      disabled={updateRoleMutation.isPending}
+                      className="rounded-[1rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-2.5 text-sm text-[#43362c] outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <option value="USER">USER</option>
+                      <option value="ADMIN">ADMIN</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : null}
       </SectionCard>

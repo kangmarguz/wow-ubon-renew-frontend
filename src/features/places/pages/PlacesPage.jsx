@@ -1,9 +1,11 @@
 import { useEffect, useState, useTransition } from "react";
 import { useDeferredValue } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ArrowRight, ImageOff, MapPinned, Search, SlidersHorizontal, Sparkles, Star, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SectionCard } from "../../../shared/ui/SectionCard";
+import { StateNotice } from "../../../shared/ui/StateNotice";
 import { ubonDistricts } from "../../../shared/constants/ubonDistricts";
 import { getPlaceCategoryLabel, placeCategories } from "../../../shared/constants/placeCategories";
 import { fetchPlaces } from "../api/publicPlacesApi";
@@ -91,57 +93,86 @@ export function PlacesPage() {
         descriptionClassName="text-[14px] leading-7 text-[#74685e]"
       >
         <div className="grid gap-4 md:grid-cols-4">
-          <input
-            value={searchValue}
-            onChange={(event) => setSearchValue(event.target.value)}
-            className="rounded-[1.2rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3 text-sm outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
-            placeholder="ค้นหาด้วยชื่อสถานที่"
-          />
+          <label className="relative block">
+            <Search
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#a59384]"
+              aria-hidden="true"
+            />
+            <input
+              value={searchValue}
+              onChange={(event) => setSearchValue(event.target.value)}
+              className="w-full rounded-[1.2rem] border border-[#d8cbbd] bg-[#fffdf9] py-3 pl-11 pr-4 text-sm outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
+              placeholder="ค้นหาด้วยชื่อสถานที่"
+            />
+          </label>
 
-          <select
-            value={category}
-            onChange={(event) => handleFilterChange("category", event.target.value)}
-            className="rounded-[1.2rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3 text-sm outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
-          >
-            {placeCategories.map((option) => (
-              <option key={option.label} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <label className="relative block">
+            <Sparkles
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#a59384]"
+              aria-hidden="true"
+            />
+            <select
+              value={category}
+              onChange={(event) => handleFilterChange("category", event.target.value)}
+              className="w-full appearance-none rounded-[1.2rem] border border-[#d8cbbd] bg-[#fffdf9] py-3 pl-11 pr-4 text-sm outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
+            >
+              {placeCategories.map((option) => (
+                <option key={option.label} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
 
-          <select
-            value={district}
-            onChange={(event) => handleFilterChange("district", event.target.value)}
-            className="rounded-[1.2rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3 text-sm outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
-          >
-            <option value="">ทุกอำเภอ</option>
-            {ubonDistricts.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+          <label className="relative block">
+            <MapPinned
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#a59384]"
+              aria-hidden="true"
+            />
+            <select
+              value={district}
+              onChange={(event) => handleFilterChange("district", event.target.value)}
+              className="w-full appearance-none rounded-[1.2rem] border border-[#d8cbbd] bg-[#fffdf9] py-3 pl-11 pr-4 text-sm outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
+            >
+              <option value="">ทุกอำเภอ</option>
+              {ubonDistricts.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
 
-          <select
-            value={sort}
-            onChange={(event) => handleFilterChange("sort", event.target.value)}
-            className="rounded-[1.2rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3 text-sm outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
-          >
-            {sortOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <label className="relative block">
+            <SlidersHorizontal
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#a59384]"
+              aria-hidden="true"
+            />
+            <select
+              value={sort}
+              onChange={(event) => handleFilterChange("sort", event.target.value)}
+              className="w-full appearance-none rounded-[1.2rem] border border-[#d8cbbd] bg-[#fffdf9] py-3 pl-11 pr-4 text-sm outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
+            >
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         <div className="mt-4 flex justify-end">
           <button
             type="button"
             onClick={handleClearFilters}
-            className="inline-flex rounded-full border border-[#d6c7b8] bg-white px-4 py-2 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:text-[#4c3b2d]"
+            className="inline-flex items-center gap-2 rounded-full border border-[#d6c7b8] bg-white px-4 py-2 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:text-[#4c3b2d]"
           >
+            <X size={16} aria-hidden="true" />
             ล้างตัวกรอง
           </button>
         </div>
@@ -155,22 +186,12 @@ export function PlacesPage() {
         descriptionClassName="text-[14px] leading-7 text-[#74685e]"
         contentClassName="space-y-5"
       >
-        {isLoading || isPending ? (
-          <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-10 text-sm text-[#7c6f63]">
-            กำลังโหลดรายการสถานที่...
-          </div>
-        ) : null}
+        {isLoading || isPending ? <StateNotice>กำลังโหลดรายการสถานที่...</StateNotice> : null}
 
-        {isError ? (
-          <div className="rounded-[1.5rem] border border-[#f0c6c6] bg-[#fff5f5] px-6 py-10 text-sm text-[#9a4b4b]">
-            {error?.response?.data?.message || "ไม่สามารถดึงข้อมูลสถานที่ได้"}
-          </div>
-        ) : null}
+        {isError ? <StateNotice tone="error">{error?.response?.data?.message || "ไม่สามารถดึงข้อมูลสถานที่ได้"}</StateNotice> : null}
 
         {!isLoading && !isError && data?.items?.length === 0 ? (
-          <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-10 text-sm text-[#7c6f63]">
-            ยังไม่พบสถานที่ที่ตรงกับเงื่อนไขที่เลือก
-          </div>
+          <StateNotice>ยังไม่พบสถานที่ที่ตรงกับเงื่อนไขที่เลือก</StateNotice>
         ) : null}
 
         {!isLoading && !isError && data?.items?.length > 0 ? (
@@ -184,9 +205,16 @@ export function PlacesPage() {
                 >
                   <div className="aspect-[4/3] bg-[#f4ebdf]">
                     {place.coverImage ? (
-                      <img src={place.coverImage} alt={place.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" />
+                      <img
+                        src={place.coverImage}
+                        alt={place.name}
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                      />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-sm text-[#8a7a6a]">ไม่มีรูปภาพประกอบ</div>
+                      <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-[#8a7a6a]">
+                        <ImageOff size={20} aria-hidden="true" />
+                        <span>ไม่มีรูปภาพประกอบ</span>
+                      </div>
                     )}
                   </div>
 
@@ -194,24 +222,31 @@ export function PlacesPage() {
                     <div className="space-y-2">
                       <div className="text-xs tracking-[0.22em] text-[#a06840]">{getPlaceCategoryLabel(place.category)}</div>
                       <h3 className="text-xl font-semibold leading-snug text-[#3f3328]">{place.name}</h3>
-                      <p className="text-sm text-[#7a6d61]">
+                      <p className="inline-flex items-center gap-1.5 text-sm text-[#7a6d61]">
+                        <MapPinned size={14} aria-hidden="true" />
                         {place.district}
                         {place.province ? `, ${place.province}` : ""}
                       </p>
                     </div>
 
                     <div className="flex items-center justify-between text-sm text-[#6f6257]">
-                      <span>คะแนน {Number(place.averageRating || 0).toFixed(1)}</span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <Star size={14} className="text-[#a06840]" aria-hidden="true" />
+                        คะแนน {Number(place.averageRating || 0).toFixed(1)}
+                      </span>
                       <span>{place.reviewCount || 0} รีวิว</span>
+                    </div>
+
+                    <div className="inline-flex items-center gap-2 text-sm font-semibold text-[#6b5340] transition group-hover:text-[#3f3328]">
+                      ดูรายละเอียด
+                      <ArrowRight size={16} aria-hidden="true" />
                     </div>
                   </div>
                 </Link>
               ))}
             </div>
 
-            <div className="text-sm text-[#7a6d61]">
-              พบทั้งหมด {data.pagination?.total || data.items.length} รายการ
-            </div>
+            <div className="text-sm text-[#7a6d61]">พบทั้งหมด {data.pagination?.total || data.items.length} รายการ</div>
           </>
         ) : null}
       </SectionCard>

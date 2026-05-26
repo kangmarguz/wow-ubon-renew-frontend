@@ -8,3 +8,95 @@ server/node_modules/
 client/dist/
 server/dist/
 server/prisma/dev.db
+
+# ==========================================
+# OS Generated Files
+# ==========================================
+.DS_Store
+Thumbs.db
+*.lnk
+*.sys
+*.tmp
+
+# ==========================================
+# Node.js / Frontend (React, Next.js, Vite)
+# ==========================================
+node_modules/
+/npm-debug.log*
+/yarn-error.log*
+/yarn-debug.log*
+/.pnpm-debug.log*
+
+# Next.js build output
+.next/
+out/
+
+# Production build outputs
+dist/
+build/
+
+# ==========================================
+# Java / Backend (Maven / Gradle)
+# ==========================================
+# Maven target
+target/
+*.war
+*.ear
+*.jar
+
+# Gradle build output
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Log files
+*.log
+logs/
+
+# ==========================================
+# IDEs & Editors
+# ==========================================
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# VS Code
+.vscode/
+!.vscode/extensions.json
+.history/
+
+# Eclipse
+.metadata/
+.classpath
+.project
+.settings/
+*.launch
+
+# ==========================================
+# Environment Variables & Secrets (CRITICAL)
+# ==========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env.bak
+
+# ==========================================
+# Databases & Docker
+# ==========================================
+.docker/
+# ถ้านำ database มา run ใน docker-compose และผูก volume ไว้
+/postgres_data/
+/mysql_data/
+/mongo_data/
+
+# ==========================================
+# Testing & Coverage
+# ==========================================
+/coverage/
+.nyc_output/
+.jacoco/

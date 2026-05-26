@@ -1,7 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
+import {
+  ArrowRight,
+  CalendarDays,
+  Clock3,
+  Eye,
+  EyeOff,
+  MapPinned,
+  MessageSquare,
+  ShieldCheck,
+  Star,
+  User,
+  Users
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SectionCard } from "../../../shared/ui/SectionCard";
+import { StateNotice } from "../../../shared/ui/StateNotice";
 import { getPlaceCategoryLabel } from "../../../shared/constants/placeCategories";
 import { fetchAdminDashboard } from "../api/adminDashboardApi";
 
@@ -10,37 +24,43 @@ const metricCards = [
     key: "pendingPlaces",
     title: "สถานที่รออนุมัติ",
     description: "รายการที่ยังรอแอดมินตรวจสอบก่อนเผยแพร่",
-    accentClassName: "text-[#8a6432]"
+    accentClassName: "text-[#8a6432]",
+    icon: Clock3
   },
   {
     key: "approvedPlaces",
     title: "สถานที่เผยแพร่แล้ว",
     description: "สถานที่ที่ผ่านอนุมัติและแสดงบนหน้า public",
-    accentClassName: "text-[#2f6b41]"
+    accentClassName: "text-[#2f6b41]",
+    icon: MapPinned
   },
   {
     key: "visibleReviews",
     title: "รีวิวที่แสดงผล",
     description: "รีวิวที่ยังมองเห็นได้ในหน้าสถานที่",
-    accentClassName: "text-[#3f3328]"
+    accentClassName: "text-[#3f3328]",
+    icon: Eye
   },
   {
     key: "hiddenReviews",
     title: "รีวิวที่ถูกซ่อน",
     description: "รีวิวที่ถูก moderation ออกจากหน้า public",
-    accentClassName: "text-[#9a4b4b]"
+    accentClassName: "text-[#9a4b4b]",
+    icon: EyeOff
   },
   {
     key: "totalUsers",
     title: "สมาชิกทั้งหมด",
     description: "จำนวนผู้ใช้ที่มีบัญชีในระบบตอนนี้",
-    accentClassName: "text-[#5f4b3d]"
+    accentClassName: "text-[#5f4b3d]",
+    icon: Users
   },
   {
     key: "adminUsers",
     title: "ผู้ดูแลระบบ",
     description: "บัญชีที่มีสิทธิ์จัดการระบบระดับแอดมิน",
-    accentClassName: "text-[#7b5a3f]"
+    accentClassName: "text-[#7b5a3f]",
+    icon: ShieldCheck
   }
 ];
 
@@ -77,7 +97,10 @@ export function AdminDashboardPage() {
                 key={card.key}
                 className="rounded-[1.6rem] border border-[#e7dbcf] bg-white/85 p-5 shadow-[0_10px_24px_rgba(74,55,37,0.05)]"
               >
-                <div className="h-4 w-28 rounded-full bg-[#efe5da]" />
+                <div className="flex items-center justify-between">
+                  <div className="h-4 w-28 rounded-full bg-[#efe5da]" />
+                  <div className="h-9 w-9 rounded-full bg-[#f5ede3]" />
+                </div>
                 <div className="mt-5 h-10 w-20 rounded-[1rem] bg-[#f5ede3]" />
                 <div className="mt-4 h-3 w-full rounded-full bg-[#f1e8de]" />
                 <div className="mt-2 h-3 w-4/5 rounded-full bg-[#f1e8de]" />
@@ -87,25 +110,30 @@ export function AdminDashboardPage() {
         ) : null}
 
         {isError ? (
-          <div className="rounded-[1.5rem] border border-[#f0c6c6] bg-[#fff5f5] px-6 py-10 text-sm text-[#9a4b4b]">
-            {error?.response?.data?.message || "ไม่สามารถดึงข้อมูลสรุปของแดชบอร์ดได้"}
-          </div>
+          <StateNotice tone="error">{error?.response?.data?.message || "ไม่สามารถดึงข้อมูลสรุปของแดชบอร์ดได้"}</StateNotice>
         ) : null}
 
         {!isLoading && !isError && summary ? (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {metricCards.map((card) => (
-              <div
-                key={card.key}
-                className="rounded-[1.6rem] border border-[#e7dbcf] bg-white/92 p-5 shadow-[0_10px_24px_rgba(74,55,37,0.05)]"
-              >
-                <div className="text-xs font-semibold tracking-[0.18em] text-[#9a6a45]">{card.title}</div>
-                <div className={`mt-4 text-[2.6rem] font-semibold leading-none ${card.accentClassName}`}>
-                  {summary[card.key]}
+            {metricCards.map((card) => {
+              const Icon = card.icon;
+
+              return (
+                <div
+                  key={card.key}
+                  className="rounded-[1.6rem] border border-[#e7dbcf] bg-white/92 p-5 shadow-[0_10px_24px_rgba(74,55,37,0.05)]"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-xs font-semibold tracking-[0.18em] text-[#9a6a45]">{card.title}</div>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#faf2e8] text-[#8d735f]">
+                      <Icon size={18} aria-hidden="true" />
+                    </div>
+                  </div>
+                  <div className={`mt-4 text-[2.6rem] font-semibold leading-none ${card.accentClassName}`}>{summary[card.key]}</div>
+                  <div className="mt-3 text-sm leading-7 text-[#6d6156]">{card.description}</div>
                 </div>
-                <div className="mt-3 text-sm leading-7 text-[#6d6156]">{card.description}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : null}
       </SectionCard>
@@ -142,11 +170,16 @@ export function AdminDashboardPage() {
                     <div className="min-w-0">
                       <div className="text-xs tracking-[0.18em] text-[#a06840]">{getPlaceCategoryLabel(place.category)}</div>
                       <div className="mt-2 text-base font-semibold text-[#3f3328]">{place.name}</div>
-                      <div className="mt-1 text-sm text-[#74685e]">
-                        {place.district} · โดย {place.createdBy?.name || "-"}
+                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#74685e]">
+                        <span>{place.district}</span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <User size={14} aria-hidden="true" />
+                          โดย {place.createdBy?.name || "-"}
+                        </span>
                       </div>
                     </div>
-                    <span className="rounded-full border border-[#eadbb8] bg-[#fff6df] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[#8a6432]">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#eadbb8] bg-[#fff6df] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[#8a6432]">
+                      <Clock3 size={13} aria-hidden="true" />
                       PENDING
                     </span>
                   </div>
@@ -156,16 +189,15 @@ export function AdminDashboardPage() {
           ) : null}
 
           {!isLoading && !isError && !summary?.recentPendingPlaces?.length ? (
-            <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-5 py-8 text-sm text-[#7c6f63]">
-              ตอนนี้ไม่มีสถานที่รอตรวจใหม่
-            </div>
+            <StateNotice>ตอนนี้ไม่มีสถานที่รอตรวจใหม่</StateNotice>
           ) : null}
 
           <Link
             to="/admin/places"
-            className="inline-flex rounded-full border border-[#c9b7a5] bg-white/85 px-4 py-2 text-sm font-semibold text-[#5b4737] transition hover:border-[#9a816c] hover:text-[#3f3328]"
+            className="inline-flex items-center gap-2 rounded-full border border-[#c9b7a5] bg-white/85 px-4 py-2 text-sm font-semibold text-[#5b4737] transition hover:border-[#9a816c] hover:text-[#3f3328]"
           >
             ไปหน้าจัดการสถานที่
+            <ArrowRight size={16} aria-hidden="true" />
           </Link>
         </SectionCard>
 
@@ -198,18 +230,35 @@ export function AdminDashboardPage() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="text-base font-semibold text-[#3f3328]">{review.place.name}</div>
-                      <div className="mt-1 text-sm text-[#74685e]">
-                        โดย {review.user?.name || "-"} · คะแนน {review.rating}/5
+                      <div className="inline-flex items-center gap-2 text-base font-semibold text-[#3f3328]">
+                        <MessageSquare size={16} aria-hidden="true" className="text-[#8c7a6a]" />
+                        {review.place.name}
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#74685e]">
+                        <span className="inline-flex items-center gap-1.5">
+                          <User size={14} aria-hidden="true" />
+                          โดย {review.user?.name || "-"}
+                        </span>
+                        <span className="inline-flex items-center gap-1.5">
+                          <Star size={14} className="text-[#a06840]" aria-hidden="true" />
+                          คะแนน {review.rating}/5
+                        </span>
+                        {review.createdAt ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            <CalendarDays size={14} aria-hidden="true" />
+                            {new Intl.DateTimeFormat("th-TH", { dateStyle: "medium" }).format(new Date(review.createdAt))}
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                     <span
-                      className={`rounded-full border px-3 py-1 text-[11px] font-semibold tracking-[0.16em] ${
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold tracking-[0.16em] ${
                         review.status === "HIDDEN"
                           ? "border-[#e7caca] bg-[#fff4f4] text-[#9a4b4b]"
                           : "border-[#d7e4d6] bg-[#eff7ef] text-[#356547]"
                       }`}
                     >
+                      {review.status === "HIDDEN" ? <EyeOff size={13} aria-hidden="true" /> : <Eye size={13} aria-hidden="true" />}
                       {review.status}
                     </span>
                   </div>
@@ -220,16 +269,15 @@ export function AdminDashboardPage() {
           ) : null}
 
           {!isLoading && !isError && !summary?.recentReviews?.length ? (
-            <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-5 py-8 text-sm text-[#7c6f63]">
-              ตอนนี้ยังไม่มีรีวิวในระบบ
-            </div>
+            <StateNotice>ตอนนี้ยังไม่มีรีวิวในระบบ</StateNotice>
           ) : null}
 
           <Link
             to="/admin/reviews"
-            className="inline-flex rounded-full border border-[#c9b7a5] bg-white/85 px-4 py-2 text-sm font-semibold text-[#5b4737] transition hover:border-[#9a816c] hover:text-[#3f3328]"
+            className="inline-flex items-center gap-2 rounded-full border border-[#c9b7a5] bg-white/85 px-4 py-2 text-sm font-semibold text-[#5b4737] transition hover:border-[#9a816c] hover:text-[#3f3328]"
           >
             ไปหน้าจัดการรีวิว
+            <ArrowRight size={16} aria-hidden="true" />
           </Link>
         </SectionCard>
       </div>

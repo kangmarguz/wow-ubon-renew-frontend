@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { EyeOff, MessageSquare, Star, Trash2, User, CalendarDays } from "lucide-react";
 import { toast } from "react-toastify";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SearchFieldCard } from "../../../shared/ui/SearchFieldCard";
@@ -143,12 +144,13 @@ export function AdminReviewsPage() {
                           {getPlaceCategoryLabel(review.place.category)}
                         </span>
                         <span
-                          className={`rounded-full border px-3 py-1 text-[11px] font-semibold tracking-[0.16em] ${
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold tracking-[0.16em] ${
                             isHidden
                               ? "border-[#e7caca] bg-[#fff4f4] text-[#9a4b4b]"
                               : "border-[#d7e4d6] bg-[#eff7ef] text-[#356547]"
                           }`}
                         >
+                          <MessageSquare size={13} aria-hidden="true" />
                           {getStatusLabel(review.status)}
                         </span>
                       </div>
@@ -156,10 +158,19 @@ export function AdminReviewsPage() {
                       <div>
                         <div className="text-lg font-semibold text-[#3f3328]">{review.place.name}</div>
                         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#74685e]">
-                          <span>โดย {review.user.name}</span>
+                          <span className="inline-flex items-center gap-1.5">
+                            <User size={14} aria-hidden="true" />
+                            โดย {review.user.name}
+                          </span>
                           <span>{review.user.email}</span>
-                          <span>คะแนน {review.rating}/5</span>
-                          <span>{formatDate(review.createdAt)}</span>
+                          <span className="inline-flex items-center gap-1.5">
+                            <Star size={14} className="text-[#a06840]" aria-hidden="true" />
+                            คะแนน {review.rating}/5
+                          </span>
+                          <span className="inline-flex items-center gap-1.5">
+                            <CalendarDays size={14} aria-hidden="true" />
+                            {formatDate(review.createdAt)}
+                          </span>
                         </div>
                       </div>
 
@@ -171,16 +182,18 @@ export function AdminReviewsPage() {
                         type="button"
                         onClick={() => hideMutation.mutate(review.id)}
                         disabled={isMutating || isHidden}
-                        className="rounded-full border border-[#d6c7b8] px-4 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:text-[#4c3b2d] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex items-center gap-2 rounded-full border border-[#d6c7b8] px-4 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:text-[#4c3b2d] disabled:cursor-not-allowed disabled:opacity-60"
                       >
+                        <EyeOff size={16} aria-hidden="true" />
                         {isHidden ? "ซ่อนแล้ว" : "ซ่อนรีวิว"}
                       </button>
                       <button
                         type="button"
                         onClick={() => setDeleteTarget(review)}
                         disabled={isMutating}
-                        className="rounded-full border border-[#d7b1b1] px-4 py-2.5 text-sm font-semibold text-[#8f4e4e] transition hover:bg-[#fff3f3] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex items-center gap-2 rounded-full border border-[#d7b1b1] px-4 py-2.5 text-sm font-semibold text-[#8f4e4e] transition hover:bg-[#fff3f3] disabled:cursor-not-allowed disabled:opacity-60"
                       >
+                        <Trash2 size={16} aria-hidden="true" />
                         ลบรีวิว
                       </button>
                     </div>

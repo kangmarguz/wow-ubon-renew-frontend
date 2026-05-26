@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ArrowRight, LockKeyhole, MessageSquare, PencilLine, Save, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useAuthStore } from "../../auth/store/useAuthStore";
@@ -78,13 +79,17 @@ export function ReviewEditor({
   if (!user) {
     return (
       <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] p-5 text-sm leading-7 text-[#6f6257]">
-        <div className="font-semibold text-[#3f3328]">เข้าสู่ระบบก่อนจึงจะเขียนรีวิวได้</div>
+        <div className="inline-flex items-center gap-2 font-semibold text-[#3f3328]">
+          <LockKeyhole size={16} aria-hidden="true" />
+          เข้าสู่ระบบก่อนจึงจะเขียนรีวิวได้
+        </div>
         <div className="mt-2">หากต้องการแชร์ประสบการณ์ของคุณกับสถานที่นี้ กรุณาเข้าสู่ระบบก่อน</div>
         <Link
           to="/login"
-          className="mt-4 inline-flex rounded-full border border-[#c9b7a5] px-4 py-2 text-sm font-semibold text-[#5b4737] transition hover:border-[#9a816c] hover:text-[#3f3328]"
+          className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#c9b7a5] px-4 py-2 text-sm font-semibold text-[#5b4737] transition hover:border-[#9a816c] hover:text-[#3f3328]"
         >
           ไปหน้าเข้าสู่ระบบ
+          <ArrowRight size={16} aria-hidden="true" />
         </Link>
       </div>
     );
@@ -93,7 +98,11 @@ export function ReviewEditor({
   if (isOwner) {
     return (
       <div className="rounded-[1.5rem] border border-[#eadfce] bg-[#fffaf4] p-5 text-sm leading-7 text-[#6f6257]">
-        คุณเป็นผู้สร้างสถานที่นี้ จึงไม่สามารถให้คะแนนหรือเขียนรีวิวสำหรับรายการของตัวเองได้
+        <div className="inline-flex items-center gap-2 font-semibold text-[#3f3328]">
+          <MessageSquare size={16} aria-hidden="true" />
+          คุณเป็นผู้สร้างสถานที่นี้
+        </div>
+        <div className="mt-2">จึงไม่สามารถให้คะแนนหรือเขียนรีวิวสำหรับรายการของตัวเองได้</div>
       </div>
     );
   }
@@ -102,10 +111,16 @@ export function ReviewEditor({
     <form onSubmit={handleSubmit} className={`space-y-5 rounded-[1.6rem] border border-[#e2d5c7] bg-[#fffdf9] p-5 ${className}`}>
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
-          <div className="text-lg font-semibold text-[#3f3328]">{resolvedTitle}</div>
+          <div className="inline-flex items-center gap-2 text-lg font-semibold text-[#3f3328]">
+            {existingReview ? <PencilLine size={18} aria-hidden="true" /> : <MessageSquare size={18} aria-hidden="true" />}
+            {resolvedTitle}
+          </div>
           <div className="mt-1 text-sm text-[#74685e]">{resolvedDescription}</div>
         </div>
-        <div className="text-sm text-[#8c7a6a]">คะแนนปัจจุบัน: {formState.rating}/5</div>
+        <div className="inline-flex items-center gap-1.5 text-sm text-[#8c7a6a]">
+          <Star size={14} className="text-[#a06840]" aria-hidden="true" />
+          คะแนนปัจจุบัน: {formState.rating}/5
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -129,8 +144,9 @@ export function ReviewEditor({
         <button
           type="submit"
           disabled={saveReviewMutation.isPending}
-          className="rounded-full bg-[#8b6a4f] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#74553e] disabled:cursor-not-allowed disabled:opacity-70"
+          className="inline-flex items-center gap-2 rounded-full bg-[#8b6a4f] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#74553e] disabled:cursor-not-allowed disabled:opacity-70"
         >
+          <Save size={16} aria-hidden="true" className={saveReviewMutation.isPending ? "animate-pulse" : ""} />
           {saveReviewMutation.isPending ? "กำลังบันทึก..." : existingReview ? submitLabelUpdate : submitLabelCreate}
         </button>
       </div>
