@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -6,6 +6,9 @@ import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SectionCard } from "../../../shared/ui/SectionCard";
 import { getPlaceCategoryLabel } from "../../../shared/constants/placeCategories";
 import { fetchMyPlaces, resubmitMyPlace } from "../api/myPlacesApi";
+import { ProfilePagination } from "../components/ProfilePagination";
+
+const PAGE_SIZE = 10;
 
 const statusConfig = {
   APPROVED: {
@@ -46,6 +49,7 @@ export function MyPlacesPage() {
   const [expandedRejectedId, setExpandedRejectedId] = useState(null);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("latest");
+  const [currentPage, setCurrentPage] = useState(1);
   const { data: places = [], isLoading, isError, error } = useQuery({
     queryKey: ["my-places"],
     queryFn: fetchMyPlaces
@@ -79,6 +83,19 @@ export function MyPlacesPage() {
 
       return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
     });
+
+  const totalPages = Math.max(1, Math.ceil(filteredPlaces.length / PAGE_SIZE));
+  const paginatedPlaces = filteredPlaces.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, sortBy]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   return (
     <div className="space-y-8">
@@ -150,8 +167,8 @@ export function MyPlacesPage() {
           </div>
         ) : null}
 
-        {!isLoading && !isError && filteredPlaces.length > 0
-          ? filteredPlaces.map((place) => {
+        {!isLoading && !isError && paginatedPlaces.length > 0
+          ? paginatedPlaces.map((place) => {
               const status = statusConfig[place.status] || statusConfig.PENDING;
               const isRejected = place.status === "REJECTED";
               const isPending = place.status === "PENDING";
@@ -282,6 +299,10 @@ export function MyPlacesPage() {
               );
             })
           : null}
+
+        {!isLoading && !isError && filteredPlaces.length > 0 ? (
+          <ProfilePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+        ) : null}
       </SectionCard>
     </div>
   );
