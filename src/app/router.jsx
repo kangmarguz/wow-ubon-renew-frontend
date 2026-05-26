@@ -42,6 +42,7 @@ export function AppRouter() {
 
           <Route element={<ProtectedRoute allowedRoles={["USER", "ADMIN"]} />}>
             <Route path="submit-place" element={<SubmitPlacePage />} />
+            <Route path="my-places/:placeId/edit" element={<SubmitPlacePage />} />
             <Route path="my-places" element={<MyPlacesPage />} />
             <Route path="my-reviews" element={<MyReviewsPage />} />
           </Route>

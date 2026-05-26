@@ -20,3 +20,8 @@ export async function createPlace(payload) {
   const response = await http.post("/places", payload);
   return response.data.data.place;
 }
+
+export async function updatePlace(placeId, payload) {
+  const response = await http.patch(`/places/${placeId}`, payload);
+  return response.data.data.place;
+}

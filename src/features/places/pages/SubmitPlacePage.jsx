@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import L from "leaflet";
 import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
 import { toast } from "react-toastify";
@@ -11,7 +13,8 @@ import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SectionCard } from "../../../shared/ui/SectionCard";
 import { ubonDistricts } from "../../../shared/constants/ubonDistricts";
-import { createPlace, uploadPlaceImages } from "../api/placesApi";
+import { updatePlace, createPlace, uploadPlaceImages } from "../api/placesApi";
+import { fetchMyPlaceDetail } from "../../profile/api/myPlacesApi";
 
 const placeSchema = z.object({
   name: z.string().min(2),
@@ -24,6 +27,7 @@ const placeSchema = z.object({
 });
 
 const defaultMapCenter = [15.2448, 104.8472];
+const defaultDistrict = "เมืองอุบลราชธานี";
 
 const placeMarkerIcon = L.icon({
   iconRetinaUrl: markerIcon2x,
@@ -53,12 +57,15 @@ function LocationPicker({ markerPosition, onPick }) {
 }
 
 export function SubmitPlacePage() {
+  const navigate = useNavigate();
+  const { placeId } = useParams();
+  const isEditMode = Boolean(placeId);
   const { register, handleSubmit, reset, setValue, watch } = useForm({
     resolver: zodResolver(placeSchema),
     defaultValues: {
       name: "",
       category: "RESTAURANT",
-      district: "เมืองอุบลราชธานี",
+      district: defaultDistrict,
       address: "",
       description: "",
       latitude: defaultMapCenter[0],
@@ -66,8 +73,19 @@ export function SubmitPlacePage() {
     }
   });
 
+  const { data: editingPlace, isLoading: isLoadingPlace, isError: isPlaceError, error: placeError } = useQuery({
+    queryKey: ["my-place-detail", placeId],
+    queryFn: () => fetchMyPlaceDetail(placeId),
+    enabled: isEditMode
+  });
+
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [markerPosition, setMarkerPosition] = useState({
+    lat: defaultMapCenter[0],
+    lng: defaultMapCenter[1]
+  });
+  const [resetLocationTarget, setResetLocationTarget] = useState({
     lat: defaultMapCenter[0],
     lng: defaultMapCenter[1]
   });
@@ -92,6 +110,33 @@ export function SubmitPlacePage() {
     };
   }, [previewFiles]);
 
+  useEffect(() => {
+    if (!editingPlace) {
+      return;
+    }
+
+    reset({
+      name: editingPlace.name,
+      category: editingPlace.category,
+      district: editingPlace.district,
+      address: editingPlace.address,
+      description: editingPlace.description,
+      latitude: editingPlace.latitude,
+      longitude: editingPlace.longitude
+    });
+
+    setExistingImages(editingPlace.images || []);
+    setSelectedFiles([]);
+    setMarkerPosition({
+      lat: editingPlace.latitude,
+      lng: editingPlace.longitude
+    });
+    setResetLocationTarget({
+      lat: editingPlace.latitude,
+      lng: editingPlace.longitude
+    });
+  }, [editingPlace, reset]);
+
   const fieldClassName =
     "w-full rounded-[1.4rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3.5 text-sm text-ink outline-none transition placeholder:text-[#9b8d80] focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]";
 
@@ -109,6 +154,10 @@ export function SubmitPlacePage() {
     );
   };
 
+  const handleRemoveExistingImage = (imageIdToRemove) => {
+    setExistingImages((currentImages) => currentImages.filter((image) => image.id !== imageIdToRemove));
+  };
+
   const handlePickLocation = ({ lat, lng }) => {
     setMarkerPosition({ lat, lng });
     setValue("latitude", lat, { shouldDirty: true });
@@ -116,65 +165,168 @@ export function SubmitPlacePage() {
   };
 
   const handleResetLocation = () => {
-    const [lat, lng] = defaultMapCenter;
-    setMarkerPosition({ lat, lng });
-    setValue("latitude", lat, { shouldDirty: true });
-    setValue("longitude", lng, { shouldDirty: true });
+    setMarkerPosition(resetLocationTarget);
+    setValue("latitude", resetLocationTarget.lat, { shouldDirty: true });
+    setValue("longitude", resetLocationTarget.lng, { shouldDirty: true });
+  };
+
+  const handleResetCreateForm = () => {
+    reset({
+      name: "",
+      category: "RESTAURANT",
+      district: defaultDistrict,
+      address: "",
+      description: "",
+      latitude: defaultMapCenter[0],
+      longitude: defaultMapCenter[1]
+    });
+    setSelectedFiles([]);
+    setExistingImages([]);
+    setMarkerPosition({
+      lat: defaultMapCenter[0],
+      lng: defaultMapCenter[1]
+    });
+    setResetLocationTarget({
+      lat: defaultMapCenter[0],
+      lng: defaultMapCenter[1]
+    });
   };
 
   const onSubmit = async (values) => {
-    if (selectedFiles.length === 0) {
+    const totalImageCount = existingImages.length + selectedFiles.length;
+
+    if (totalImageCount === 0) {
       toast.error("กรุณาเลือกรูปอย่างน้อย 1 รูป");
       return;
     }
 
     try {
       setIsSubmitting(true);
-      const uploadedImages = await uploadPlaceImages(selectedFiles);
+
+      const uploadedImages = selectedFiles.length > 0 ? await uploadPlaceImages(selectedFiles) : [];
+      const mergedImages = [
+        ...existingImages.map((image, index) => ({
+          publicId: image.publicId,
+          url: image.url,
+          order: index
+        })),
+        ...uploadedImages.map((image, index) => ({
+          ...image,
+          order: existingImages.length + index
+        }))
+      ];
+
+      if (isEditMode) {
+        await updatePlace(placeId, {
+          ...values,
+          images: mergedImages
+        });
+
+        toast.success(
+          editingPlace?.status === "APPROVED"
+            ? "บันทึกการแก้ไขแล้ว สถานะถูกเปลี่ยนกลับเป็นรอตรวจสอบ"
+            : editingPlace?.status === "REJECTED"
+              ? "บันทึกและส่งกลับเข้าตรวจสอบเรียบร้อยแล้ว"
+              : "อัปเดตข้อมูลสถานที่เรียบร้อยแล้ว"
+        );
+        navigate("/my-places");
+        return;
+      }
+
       await createPlace({
         ...values,
-        images: uploadedImages
+        images: mergedImages
       });
 
       toast.success("ส่งสถานที่เข้าสู่ระบบเรียบร้อยแล้ว");
-      reset({
-        name: "",
-        category: "RESTAURANT",
-        district: "เมืองอุบลราชธานี",
-        address: "",
-        description: "",
-        latitude: defaultMapCenter[0],
-        longitude: defaultMapCenter[1]
-      });
-      setSelectedFiles([]);
-      setMarkerPosition({
-        lat: defaultMapCenter[0],
-        lng: defaultMapCenter[1]
-      });
+      handleResetCreateForm();
     } catch (error) {
-      console.error("create-place-error", error);
-      toast.error(error?.response?.data?.message || "ส่งข้อมูลสถานที่ไม่สำเร็จ");
+      console.error("submit-place-error", error);
+      toast.error(error?.response?.data?.message || "บันทึกข้อมูลสถานที่ไม่สำเร็จ");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (isEditMode && isLoadingPlace) {
+    return (
+      <div className="rounded-[1.8rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-12 text-sm text-[#7c6f63]">
+        กำลังโหลดข้อมูลสถานที่สำหรับแก้ไข...
+      </div>
+    );
+  }
+
+  if (isEditMode && isPlaceError) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-[1.8rem] border border-[#f0c6c6] bg-[#fff5f5] px-6 py-12 text-sm text-[#9a4b4b]">
+          {placeError?.response?.data?.message || "ไม่สามารถดึงข้อมูลสถานที่สำหรับแก้ไขได้"}
+        </div>
+        <Link
+          to="/my-places"
+          className="inline-flex rounded-full border border-[#d6c7b8] px-4 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:text-[#4c3b2d]"
+        >
+          กลับไปหน้าสถานที่ของฉัน
+        </Link>
+      </div>
+    );
+  }
+
+  const pageTitle = isEditMode ? "แก้ไขข้อมูลสถานที่ของคุณ" : "ส่งสถานที่ใหม่เข้าสู่ระบบ";
+  const pageDescription = isEditMode
+    ? "ปรับข้อมูล รูปภาพ และตำแหน่งบนแผนที่ของรายการเดิมได้จากหน้านี้ ระบบจะบันทึกชุดข้อมูลล่าสุดที่คุณเลือกไว้"
+    : "กรอกข้อมูลสถานที่ให้ครบเพื่อส่งเข้าตรวจสอบก่อนเผยแพร่บนเว็บไซต์ คุณสามารถเริ่มจากรายละเอียดหลัก รูปภาพ และตำแหน่งบนแผนที่ได้จากหน้านี้";
+
   return (
     <div className="space-y-10">
       <PageIntro
-        eyebrow="เพิ่มสถานที่"
-        title="ส่งสถานที่ใหม่เข้าสู่ระบบ"
-        description="กรอกข้อมูลสถานที่ให้ครบเพื่อส่งเข้าตรวจสอบก่อนเผยแพร่บนเว็บไซต์ คุณสามารถเริ่มจากรายละเอียดหลัก รูปภาพ และตำแหน่งบนแผนที่ได้จากหน้านี้"
+        eyebrow={isEditMode ? "แก้ไขสถานที่" : "เพิ่มสถานที่"}
+        title={pageTitle}
+        description={pageDescription}
         className="max-w-4xl"
         eyebrowClassName="tracking-[0.28em]"
         titleClassName="text-[2.7rem] leading-tight md:text-[3.6rem]"
         descriptionClassName="max-w-2xl text-[15px] leading-8 text-[#6d6258]"
       />
 
+      {isEditMode && editingPlace?.status === "REJECTED" ? (
+        <div className="rounded-[1.6rem] border border-[#ebc8c8] bg-[linear-gradient(180deg,rgba(255,242,242,0.96),rgba(255,250,250,1))] p-5">
+          <div className="text-xs tracking-[0.22em] text-[#9a4b4b]">REJECTED STATUS</div>
+          <div className="mt-2 text-lg font-semibold text-[#7b3f3f]">รายการนี้ถูกปฏิเสธและรอให้คุณแก้ไขข้อมูล</div>
+          <div className="mt-2 text-sm leading-7 text-[#6f6257]">
+            {editingPlace.rejectionReason || "ยังไม่มีข้อความเหตุผลจากระบบ"}
+          </div>
+        </div>
+      ) : null}
+
+      {isEditMode && editingPlace?.status === "PENDING" ? (
+        <div className="rounded-[1.6rem] border border-[#eadbb8] bg-[linear-gradient(180deg,rgba(255,248,230,0.95),rgba(255,252,245,1))] p-5">
+          <div className="text-xs tracking-[0.22em] text-[#8a6432]">PENDING STATUS</div>
+          <div className="mt-2 text-lg font-semibold text-[#8a6432]">รายการนี้อยู่ระหว่างการตรวจสอบ</div>
+          <div className="mt-2 text-sm leading-7 text-[#6f6257]">
+            คุณยังสามารถแก้ไขรายละเอียดได้จนกว่าจะมีการอนุมัติจากแอดมิน
+          </div>
+        </div>
+      ) : null}
+
+      {isEditMode && editingPlace?.status === "APPROVED" ? (
+        <div className="rounded-[1.6rem] border border-[#cfe4d4] bg-[linear-gradient(180deg,rgba(238,247,240,0.96),rgba(252,255,252,1))] p-5">
+          <div className="text-xs tracking-[0.22em] text-[#2f6b41]">APPROVED STATUS</div>
+          <div className="mt-2 text-lg font-semibold text-[#2f6b41]">รายการนี้เผยแพร่อยู่ในระบบตอนนี้</div>
+          <div className="mt-2 text-sm leading-7 text-[#6f6257]">
+            เมื่อคุณบันทึกการแก้ไข สถานะจะกลับเป็น <span className="font-semibold text-[#2f6b41]">รอตรวจสอบ</span> และรายการนี้จะถูกซ่อนจากหน้า public ชั่วคราวจนกว่าจะอนุมัติใหม่
+          </div>
+        </div>
+      ) : null}
+
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_360px]">
         <SectionCard
-          title="ข้อมูลสถานที่"
-          description="กรอกข้อมูลสำคัญให้ครบก่อนส่งตรวจสอบ รายการของคุณจะถูกแอดมินตรวจสอบก่อนเผยแพร่จริง"
+          title={isEditMode ? "แก้ไขข้อมูลสถานที่" : "ข้อมูลสถานที่"}
+          description={
+            isEditMode
+              ? "ตรวจสอบรายละเอียดล่าสุดของรายการนี้แล้วอัปเดตเฉพาะสิ่งที่ต้องการแก้ไขได้ทันที"
+              : "กรอกข้อมูลสำคัญให้ครบก่อนส่งตรวจสอบ รายการของคุณจะถูกแอดมินตรวจสอบก่อนเผยแพร่จริง"
+          }
           className="border-[#eadfce] bg-[linear-gradient(180deg,rgba(255,253,249,0.98),rgba(250,244,236,0.94))] p-0 shadow-[0_28px_80px_rgba(74,55,37,0.08)]"
           headerClassName="border-b border-[#eadfce] px-6 py-6 md:px-8"
           titleClassName="text-[1.9rem] text-[#3f3328]"
@@ -232,7 +384,11 @@ export function SubmitPlacePage() {
             <div className="space-y-4">
               <div>
                 <div className="text-sm font-semibold text-[#5b4a3b]">รูปภาพประกอบ</div>
-                <p className="mt-1 text-sm leading-6 text-[#8a7a6a]">รองรับหลายรูป เพื่อให้ผู้ใช้เห็นบรรยากาศของสถานที่ได้ชัดขึ้น</p>
+                <p className="mt-1 text-sm leading-6 text-[#8a7a6a]">
+                  {isEditMode
+                    ? "ลบรูปเดิมที่ไม่ต้องการออกได้ และเพิ่มรูปใหม่เข้าไปในชุดเดียวกันก่อนบันทึก"
+                    : "รองรับหลายรูป เพื่อให้ผู้ใช้เห็นบรรยากาศของสถานที่ได้ชัดขึ้น"}
+                </p>
               </div>
 
               <label className="flex min-h-[180px] cursor-pointer flex-col items-center justify-center rounded-[1.8rem] border border-dashed border-[#d7c5b4] bg-[linear-gradient(180deg,#fffdf9_0%,#f8f1e8_100%)] px-6 text-center transition hover:border-[#b39478] hover:bg-[#fffaf4]">
@@ -240,13 +396,43 @@ export function SubmitPlacePage() {
                   UPLOAD AREA
                 </div>
                 <div className="mt-5 text-lg font-semibold text-[#4d3d30]">ลากไฟล์มาวางหรือคลิกเพื่อเลือกรูป</div>
-                <p className="mt-2 max-w-md text-sm leading-6 text-[#8b7b6d]">ระบบจะแสดงตัวอย่างรูปให้ดูก่อนส่งจริง และคุณสามารถลบรูปที่ไม่ต้องการออกได้</p>
+                <p className="mt-2 max-w-md text-sm leading-6 text-[#8b7b6d]">
+                  ระบบจะแสดงตัวอย่างรูปให้ดูก่อนบันทึกจริง และคุณสามารถลบรูปที่ไม่ต้องการออกได้
+                </p>
                 <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileChange} />
               </label>
 
+              {existingImages.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="text-sm font-semibold text-[#5b4a3b]">รูปเดิมที่ยังเลือกเก็บไว้</div>
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {existingImages.map((image) => (
+                      <div
+                        key={image.id}
+                        className="overflow-hidden rounded-[1.5rem] border border-[#e1d4c6] bg-white shadow-[0_12px_28px_rgba(74,55,37,0.08)]"
+                      >
+                        <div className="aspect-[4/3] bg-[#f4ebdf]">
+                          <img src={image.url} alt={editingPlace?.name || "place image"} className="h-full w-full object-cover" />
+                        </div>
+                        <div className="space-y-3 p-4">
+                          <div className="text-sm font-semibold text-[#4d3d30]">รูปเดิมในระบบ</div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveExistingImage(image.id)}
+                            className="inline-flex rounded-full border border-[#d6c7b8] px-3 py-2 text-xs font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:text-[#4c3b2d]"
+                          >
+                            ลบรูปนี้
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               {previewFiles.length > 0 ? (
                 <div className="space-y-3">
-                  <div className="text-sm font-semibold text-[#5b4a3b]">รูปที่เลือกไว้</div>
+                  <div className="text-sm font-semibold text-[#5b4a3b]">รูปใหม่ที่เพิ่มเข้ามา</div>
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {previewFiles.map(({ key, file, previewUrl }) => (
                       <div
@@ -280,15 +466,37 @@ export function SubmitPlacePage() {
 
             <div className="flex flex-col gap-4 border-t border-[#eadfce] pt-6 md:flex-row md:items-center md:justify-between">
               <div className="text-sm leading-6 text-[#7b6f64]">
-                เมื่อส่งแล้ว รายการจะเข้าสู่สถานะ <span className="font-semibold text-[#4c3b2d]">รอตรวจสอบ</span> ก่อนเผยแพร่บนเว็บไซต์
+                {isEditMode
+                  ? editingPlace?.status === "APPROVED"
+                    ? <>เมื่อบันทึกแล้ว ระบบจะใช้ข้อมูลล่าสุดของคุณและเปลี่ยนสถานะรายการกลับเป็น <span className="font-semibold text-[#4c3b2d]">รอตรวจสอบ</span></>
+                    : editingPlace?.status === "REJECTED"
+                      ? <>เมื่อบันทึกแล้ว รายการนี้จะถูกส่งกลับเข้าสถานะ <span className="font-semibold text-[#4c3b2d]">รอตรวจสอบ</span> ทันที</>
+                      : "เมื่อบันทึกแล้ว ระบบจะใช้ข้อมูลและชุดรูปภาพล่าสุดตามที่คุณแก้ไขไว้ในฟอร์มนี้"
+                  : <>เมื่อส่งแล้ว รายการจะเข้าสู่สถานะ <span className="font-semibold text-[#4c3b2d]">รอตรวจสอบ</span> ก่อนเผยแพร่บนเว็บไซต์</>}
               </div>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="inline-flex items-center justify-center rounded-full bg-[#3f3328] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#2f251d] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isSubmitting ? "กำลังส่งข้อมูล..." : "ส่งเข้าสู่ระบบเพื่อตรวจสอบ"}
-              </button>
+              <div className="flex flex-wrap gap-3">
+                {isEditMode ? (
+                  <Link
+                    to="/my-places"
+                    className="inline-flex items-center justify-center rounded-full border border-[#d6c7b8] px-6 py-3 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:text-[#4c3b2d]"
+                  >
+                    ย้อนกลับ
+                  </Link>
+                ) : null}
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center justify-center rounded-full bg-[#3f3328] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#2f251d] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSubmitting
+                    ? "กำลังบันทึก..."
+                    : isEditMode
+                      ? editingPlace?.status === "REJECTED"
+                        ? "บันทึกและส่งกลับเข้าตรวจสอบ"
+                        : "บันทึกการแก้ไข"
+                      : "ส่งเข้าสู่ระบบเพื่อตรวจสอบ"}
+                </button>
+              </div>
             </div>
           </form>
         </SectionCard>
@@ -304,7 +512,8 @@ export function SubmitPlacePage() {
           >
             <div className="overflow-hidden rounded-[1.8rem] border border-[#d7c5b4]">
               <MapContainer
-                center={defaultMapCenter}
+                key={`${resetLocationTarget.lat}-${resetLocationTarget.lng}-${isEditMode ? "edit" : "create"}`}
+                center={[markerPosition.lat, markerPosition.lng]}
                 zoom={11}
                 scrollWheelZoom
                 className="h-[420px] w-full"
@@ -328,20 +537,20 @@ export function SubmitPlacePage() {
                 onClick={handleResetLocation}
                 className="mt-4 inline-flex rounded-full border border-[#d6c7b8] px-4 py-2 text-xs font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:text-[#4c3b2d]"
               >
-                ล้างหมุด
+                รีเซ็ตตำแหน่ง
               </button>
             </div>
           </SectionCard>
 
           <SectionCard
-            title="คำแนะนำก่อนส่ง"
+            title={isEditMode ? "คำแนะนำก่อนบันทึก" : "คำแนะนำก่อนส่ง"}
             className="border-[#eadfce] bg-white/75"
             titleClassName="text-[1.35rem] text-[#3f3328]"
             contentClassName="space-y-3 text-sm leading-7 text-[#726659]"
           >
             <p>ใช้ชื่อสถานที่ที่คนทั่วไปค้นหาเจอจริง เพื่อให้ระบบสร้าง slug และหน้ารายละเอียดได้ชัดเจน</p>
             <p>รูปภาพชุดแรกควรเป็นภาพที่สื่อบรรยากาศโดยรวม เพราะมีโอกาสถูกใช้เป็นภาพหลักของรายการ</p>
-            <p>หากข้อมูลที่อยู่ยังไม่ครบ ควรอย่างน้อยระบุอำเภอและตำแหน่งหมุดให้แม่นยำ</p>
+            <p>หากข้อมูลที่อยู่อาจยังไม่ครบ ควรอย่างน้อยระบุอำเภอและตำแหน่งหมุดให้แม่นยำ</p>
           </SectionCard>
         </div>
       </section>

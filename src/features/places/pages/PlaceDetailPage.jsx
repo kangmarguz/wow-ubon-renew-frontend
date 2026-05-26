@@ -6,6 +6,8 @@ import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import { useAuthStore } from "../../auth/store/useAuthStore";
+import { ReviewEditor } from "../components/ReviewEditor";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SectionCard } from "../../../shared/ui/SectionCard";
 import { getPlaceCategoryLabel } from "../../../shared/constants/placeCategories";
@@ -106,6 +108,7 @@ function ImageCarousel({ images, placeName }) {
 
 export function PlaceDetailPage() {
   const { slug } = useParams();
+  const user = useAuthStore((state) => state.user);
   const { data: place, isLoading, isError, error } = useQuery({
     queryKey: ["place-detail", slug],
     queryFn: () => fetchPlaceDetail(slug),
@@ -127,6 +130,8 @@ export function PlaceDetailPage() {
       </div>
     );
   }
+
+  const existingReview = place.reviews?.find((review) => review.user.id === user?.id) || null;
 
   return (
     <div className="space-y-8">
@@ -208,11 +213,24 @@ export function PlaceDetailPage() {
         descriptionClassName="text-[14px] leading-7 text-[#74685e]"
         contentClassName="space-y-4"
       >
+        <ReviewEditor
+          place={place}
+          existingReview={existingReview}
+          queryKeysToInvalidate={[["place-detail", place.slug], ["places"], ["my-reviews"]]}
+        />
+
         {place.reviews?.length > 0 ? (
           place.reviews.map((review) => (
             <div key={review.id} className="rounded-[1.5rem] border border-[#e2d5c7] bg-[#fffdf9] p-5">
               <div className="flex items-center justify-between gap-4">
-                <div className="font-semibold text-[#3f3328]">{review.user.name}</div>
+                <div className="font-semibold text-[#3f3328]">
+                  {review.user.name}
+                  {review.user.id === user?.id ? (
+                    <span className="ml-2 rounded-full bg-[#efe2d4] px-2.5 py-1 text-xs font-medium text-[#7b6048]">
+                      รีวิวของคุณ
+                    </span>
+                  ) : null}
+                </div>
                 <div className="text-sm text-[#74685e]">คะแนน: {review.rating}/5</div>
               </div>
               <p className="mt-3 text-sm leading-7 text-[#6f6257]">{review.content}</p>
