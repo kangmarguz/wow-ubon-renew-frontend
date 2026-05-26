@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
 import { usePlaceGallery } from "../hooks/usePlaceGallery";
 
 export function PlaceDetailGallery({ images, placeName }) {
@@ -6,8 +7,9 @@ export function PlaceDetailGallery({ images, placeName }) {
 
   if (safeImages.length === 0) {
     return (
-      <div className="flex min-h-[420px] items-center justify-center rounded-[1.8rem] border border-dashed border-[#d7c5b4] bg-[linear-gradient(180deg,#fbf6ef_0%,#f1e7db_100%)] text-sm text-[#7c6f63]">
-        ยังไม่มีรูปภาพประกอบสำหรับสถานที่นี้
+      <div className="flex min-h-[420px] flex-col items-center justify-center gap-3 rounded-[1.8rem] border border-dashed border-[#d7c5b4] bg-[linear-gradient(180deg,#fbf6ef_0%,#f1e7db_100%)] text-sm text-[#7c6f63]">
+        <ImageOff size={26} aria-hidden="true" />
+        <div>ยังไม่มีรูปภาพประกอบสำหรับสถานที่นี้</div>
       </div>
     );
   }
@@ -29,18 +31,18 @@ export function PlaceDetailGallery({ images, placeName }) {
             <button
               type="button"
               onClick={showPrevious}
-              className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-xl text-[#3f3328] shadow-lg backdrop-blur transition hover:bg-white"
+              className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-[#3f3328] shadow-lg backdrop-blur transition hover:bg-white"
               aria-label="ดูรูปก่อนหน้า"
             >
-              ‹
+              <ChevronLeft size={22} aria-hidden="true" />
             </button>
             <button
               type="button"
               onClick={showNext}
-              className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-xl text-[#3f3328] shadow-lg backdrop-blur transition hover:bg-white"
+              className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-[#3f3328] shadow-lg backdrop-blur transition hover:bg-white"
               aria-label="ดูรูปถัดไป"
             >
-              ›
+              <ChevronRight size={22} aria-hidden="true" />
             </button>
           </>
         ) : null}

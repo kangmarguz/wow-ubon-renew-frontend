@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ChevronDown, LogOut } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { adminLinks, userLinks } from "../../constants/navigation";
 import { MenuSection } from "./MenuSection";
@@ -44,6 +45,11 @@ export function UserMenu({ user, onLogout }) {
           <div className="text-sm font-semibold text-[#3f3328]">{user.name}</div>
           <div className="text-[11px] uppercase tracking-[0.16em] text-[#8c7a6a]">{user.role}</div>
         </div>
+        <ChevronDown
+          size={16}
+          className={`text-[#8c7a6a] transition ${isOpen ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
       </button>
 
       <div
@@ -63,8 +69,9 @@ export function UserMenu({ user, onLogout }) {
           <button
             type="button"
             onClick={onLogout}
-            className="block w-full rounded-[1rem] px-3 py-2.5 text-left text-sm text-[#8f4e4e] transition hover:bg-[#fff3f3]"
+            className="inline-flex w-full items-center gap-2 rounded-[1rem] px-3 py-2.5 text-left text-sm text-[#8f4e4e] transition hover:bg-[#fff3f3]"
           >
+            <LogOut size={16} aria-hidden="true" />
             ออกจากระบบ
           </button>
         </div>

@@ -1,3 +1,4 @@
+import { Ban, Check, ImageOff, RotateCcw, X } from "lucide-react";
 import { getPlaceCategoryLabel } from "../../../shared/constants/placeCategories";
 import { adminPlaceStatusBadgeConfig, adminPlaceStatusLabelConfig } from "../lib/adminPlaces";
 
@@ -18,7 +19,10 @@ export function AdminPlaceListItem({
         {place.images?.[0]?.url ? (
           <img src={place.images[0].url} alt={place.name} className="h-28 w-full object-cover" />
         ) : (
-          <div className="flex h-28 items-center justify-center text-xs text-[#8a7a6a]">ไม่มีรูป</div>
+          <div className="flex h-28 flex-col items-center justify-center gap-2 text-xs text-[#8a7a6a]">
+            <ImageOff size={18} aria-hidden="true" />
+            <span>ไม่มีรูป</span>
+          </div>
         )}
       </div>
 
@@ -35,7 +39,8 @@ export function AdminPlaceListItem({
             </span>
           ) : null}
           {isInactive ? (
-            <span className="rounded-full border border-[#e2d5c7] bg-[#f7f1ea] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[#6e6257]">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e2d5c7] bg-[#f7f1ea] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[#6e6257]">
+              <Ban size={13} aria-hidden="true" />
               ปิดการแสดงผลแล้ว
             </span>
           ) : null}
@@ -59,24 +64,27 @@ export function AdminPlaceListItem({
               type="button"
               onClick={onApprove}
               disabled={isBusy}
-              className="rounded-full bg-[#2e5a43] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#234634] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2e5a43] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#234634] disabled:cursor-not-allowed disabled:opacity-60"
             >
+              <Check size={16} aria-hidden="true" />
               อนุมัติ
             </button>
             <button
               type="button"
               onClick={onReject}
               disabled={isBusy}
-              className="rounded-full border border-[#d7b1b1] px-4 py-2.5 text-sm font-semibold text-[#8f4e4e] transition hover:bg-[#fff3f3] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d7b1b1] px-4 py-2.5 text-sm font-semibold text-[#8f4e4e] transition hover:bg-[#fff3f3] disabled:cursor-not-allowed disabled:opacity-60"
             >
+              <X size={16} aria-hidden="true" />
               ปฏิเสธ
             </button>
             <button
               type="button"
               onClick={onDeactivate}
               disabled={isBusy}
-              className="rounded-full border border-[#d6c7b8] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d6c7b8] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d] disabled:cursor-not-allowed disabled:opacity-60"
             >
+              <Ban size={16} aria-hidden="true" />
               ปิดการแสดงผล
             </button>
           </>
@@ -87,8 +95,9 @@ export function AdminPlaceListItem({
             type="button"
             onClick={onDeactivate}
             disabled={isBusy}
-            className="rounded-full border border-[#d6c7b8] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d6c7b8] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d] disabled:cursor-not-allowed disabled:opacity-60"
           >
+            <Ban size={16} aria-hidden="true" />
             ปิดการแสดงผล
           </button>
         ) : null}
@@ -98,8 +107,9 @@ export function AdminPlaceListItem({
             type="button"
             onClick={onActivate}
             disabled={isBusy}
-            className="rounded-full border border-[#c8d7cd] bg-[#edf7ef] px-4 py-2.5 text-sm font-semibold text-[#2f6b41] transition hover:border-[#97b9a3] hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#c8d7cd] bg-[#edf7ef] px-4 py-2.5 text-sm font-semibold text-[#2f6b41] transition hover:border-[#97b9a3] hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
           >
+            <RotateCcw size={16} aria-hidden="true" />
             เปิดการแสดงผลอีกครั้ง
           </button>
         ) : null}

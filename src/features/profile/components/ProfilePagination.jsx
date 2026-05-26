@@ -1,3 +1,5 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 export function ProfilePagination({ currentPage, totalPages, onPageChange }) {
   if (totalPages <= 1) {
     return null;
@@ -12,7 +14,7 @@ export function ProfilePagination({ currentPage, totalPages, onPageChange }) {
         className="inline-flex min-h-[42px] min-w-[42px] items-center justify-center rounded-full border border-[#d7c5b4] px-4 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:text-[#4c3b2d] disabled:cursor-not-allowed disabled:opacity-50"
         aria-label="หน้าก่อนหน้า"
       >
-        ←
+        <ChevronLeft size={18} aria-hidden="true" />
       </button>
 
       <div className="text-sm text-[#6f6257]">
@@ -27,7 +29,7 @@ export function ProfilePagination({ currentPage, totalPages, onPageChange }) {
         className="inline-flex min-h-[42px] min-w-[42px] items-center justify-center rounded-full border border-[#d7c5b4] px-4 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:text-[#4c3b2d] disabled:cursor-not-allowed disabled:opacity-50"
         aria-label="หน้าถัดไป"
       >
-        →
+        <ChevronRight size={18} aria-hidden="true" />
       </button>
     </div>
   );

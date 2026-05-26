@@ -1,6 +1,9 @@
+import { ArrowLeft, Save, SendHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function SubmitPlaceActionBar({ isEditMode, isSubmitting, submitLabel, submitHint, backLinkTo }) {
+  const SubmitIcon = isEditMode ? Save : SendHorizontal;
+
   return (
     <div className="space-y-4 rounded-[1.6rem] border border-[#eadfce] bg-[linear-gradient(180deg,rgba(255,252,247,0.96),rgba(250,244,236,0.9))] p-4 md:p-5">
       <div className="rounded-[1.3rem] border border-white/70 bg-white/55 px-4 py-3 text-sm leading-6 text-[#7b6f64]">
@@ -12,16 +15,18 @@ export function SubmitPlaceActionBar({ isEditMode, isSubmitting, submitLabel, su
           {isEditMode ? (
             <Link
               to={backLinkTo}
-              className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-[#d7c5b4] bg-white/90 px-5 py-3 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d]"
+              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-[#d7c5b4] bg-white/90 px-5 py-3 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d]"
             >
+              <ArrowLeft size={16} aria-hidden="true" />
               ย้อนกลับ
             </Link>
           ) : null}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center rounded-full bg-[#3f3328] px-7 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(63,51,40,0.14)] transition hover:bg-[#2f251d] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center gap-2 rounded-full bg-[#3f3328] px-7 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(63,51,40,0.14)] transition hover:bg-[#2f251d] disabled:cursor-not-allowed disabled:opacity-60"
           >
+            <SubmitIcon size={16} aria-hidden="true" className={isSubmitting ? "animate-pulse" : ""} />
             {submitLabel}
           </button>
         </div>
