@@ -2,9 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { PageIntro } from "../../../shared/ui/PageIntro";
+import { SearchFieldCard } from "../../../shared/ui/SearchFieldCard";
 import { SectionCard } from "../../../shared/ui/SectionCard";
+import { StateNotice } from "../../../shared/ui/StateNotice";
 import { getPlaceCategoryLabel } from "../../../shared/constants/placeCategories";
 import { ProfilePagination } from "../../profile/components/ProfilePagination";
+import { AdminActionDialog } from "../components/AdminActionDialog";
 import { deleteAdminReview, fetchAdminReviews, hideAdminReview } from "../api/adminReviewsApi";
 
 const PAGE_SIZE = 10;
@@ -106,39 +109,21 @@ export function AdminReviewsPage() {
         descriptionClassName="text-[14px] leading-7 text-[#74685e]"
         contentClassName="space-y-4"
       >
-        <label className="block rounded-[1.5rem] border border-[#eadfce] bg-white/75 p-4">
-          <span className="mb-2 block text-sm font-semibold text-[#5b4a3b]">ค้นหาจากชื่อสถานที่หรือชื่อผู้รีวิว</span>
-          <input
-            type="search"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="พิมพ์ชื่อสถานที่หรือชื่อผู้รีวิว"
-            className="w-full rounded-[1.1rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3 text-sm text-[#43362c] outline-none transition placeholder:text-[#a59384] focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
-          />
-        </label>
+        <SearchFieldCard
+          label="ค้นหาจากชื่อสถานที่หรือชื่อผู้รีวิว"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          placeholder="พิมพ์ชื่อสถานที่หรือชื่อผู้รีวิว"
+        />
 
-        {isLoading ? (
-          <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-10 text-sm text-[#7c6f63]">
-            กำลังโหลดรายการรีวิว...
-          </div>
-        ) : null}
+        {isLoading ? <StateNotice>กำลังโหลดรายการรีวิว...</StateNotice> : null}
 
-        {isError ? (
-          <div className="rounded-[1.5rem] border border-[#f0c6c6] bg-[#fff5f5] px-6 py-10 text-sm text-[#9a4b4b]">
-            {error?.response?.data?.message || "ไม่สามารถดึงรายการรีวิวได้"}
-          </div>
-        ) : null}
+        {isError ? <StateNotice tone="error">{error?.response?.data?.message || "ไม่สามารถดึงรายการรีวิวได้"}</StateNotice> : null}
 
-        {!isLoading && !isError && reviews.length === 0 ? (
-          <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-10 text-sm text-[#7c6f63]">
-            ยังไม่มีรีวิวในระบบ
-          </div>
-        ) : null}
+        {!isLoading && !isError && reviews.length === 0 ? <StateNotice>ยังไม่มีรีวิวในระบบ</StateNotice> : null}
 
         {!isLoading && !isError && reviews.length > 0 && filteredReviews.length === 0 ? (
-          <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-10 text-sm text-[#7c6f63]">
-            ไม่พบรีวิวที่ตรงกับคำค้นหา
-          </div>
+          <StateNotice>ไม่พบรีวิวที่ตรงกับคำค้นหา</StateNotice>
         ) : null}
 
         {!isLoading && !isError && paginatedReviews.length > 0
@@ -211,38 +196,25 @@ export function AdminReviewsPage() {
       </SectionCard>
 
       {deleteTarget ? (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-[#2b2119]/35 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-xl rounded-[1.8rem] border border-[#e2d5c7] bg-white p-6 shadow-[0_24px_60px_rgba(74,55,37,0.18)]">
-            <div className="text-xs tracking-[0.22em] text-[#9a836d]">DELETE REVIEW</div>
-            <h3 className="mt-2 text-2xl font-semibold text-[#3f3328]">ยืนยันการลบรีวิวนี้</h3>
-            <p className="mt-2 text-sm leading-7 text-[#74685e]">
+        <AdminActionDialog
+          eyebrow="DELETE REVIEW"
+          title="ยืนยันการลบรีวิวนี้"
+          description={
+            <>
               หากลบแล้ว รีวิวของ <span className="font-semibold text-[#4b3b2d]">{deleteTarget.user.name}</span> สำหรับสถานที่{" "}
               <span className="font-semibold text-[#4b3b2d]">{deleteTarget.place.name}</span> จะถูกนำออกจากระบบทันที
-            </p>
-
-            <div className="mt-5 rounded-[1.4rem] border border-[#eadfce] bg-[#fffaf4] p-4 text-sm leading-7 text-[#6f6257]">
-              “{deleteTarget.content}”
-            </div>
-
-            <div className="mt-5 flex flex-col gap-3 md:flex-row md:justify-end">
-              <button
-                type="button"
-                onClick={() => setDeleteTarget(null)}
-                className="rounded-full border border-[#d6c7b8] px-5 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:text-[#4c3b2d]"
-              >
-                ยกเลิก
-              </button>
-              <button
-                type="button"
-                disabled={deleteMutation.isPending}
-                onClick={() => deleteMutation.mutate(deleteTarget.id)}
-                className="rounded-full bg-[#8f4e4e] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#763f3f] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {deleteMutation.isPending ? "กำลังลบ..." : "ยืนยันการลบ"}
-              </button>
-            </div>
+            </>
+          }
+          confirmLabel="ยืนยันการลบ"
+          confirmPendingLabel="กำลังลบ..."
+          isPending={deleteMutation.isPending}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={() => deleteMutation.mutate(deleteTarget.id)}
+        >
+          <div className="rounded-[1.4rem] border border-[#eadfce] bg-[#fffaf4] p-4 text-sm leading-7 text-[#6f6257]">
+            “{deleteTarget.content}”
           </div>
-        </div>
+        </AdminActionDialog>
       ) : null}
     </div>
   );

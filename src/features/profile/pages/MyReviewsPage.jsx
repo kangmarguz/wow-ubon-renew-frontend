@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { PageIntro } from "../../../shared/ui/PageIntro";
+import { SearchFieldCard } from "../../../shared/ui/SearchFieldCard";
 import { SectionCard } from "../../../shared/ui/SectionCard";
+import { StateNotice } from "../../../shared/ui/StateNotice";
 import { ReviewEditor } from "../../places/components/ReviewEditor";
 import { fetchMyReviews } from "../api/myReviewsApi";
 import { ProfilePagination } from "../components/ProfilePagination";
@@ -67,39 +69,27 @@ export function MyReviewsPage() {
         descriptionClassName="text-[14px] leading-7 text-[#74685e]"
         contentClassName="space-y-4"
       >
-        <label className="block rounded-[1.5rem] border border-[#eadfce] bg-white/75 p-4">
-          <span className="mb-2 block text-sm font-semibold text-[#5b4a3b]">ค้นหาจากชื่อสถานที่</span>
-          <input
-            type="search"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="พิมพ์ชื่อสถานที่ที่คุณเคยรีวิว"
-            className="w-full rounded-[1.1rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3 text-sm text-[#43362c] outline-none transition placeholder:text-[#a59384] focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
-          />
-        </label>
+        <SearchFieldCard
+          label="ค้นหาจากชื่อสถานที่"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          placeholder="พิมพ์ชื่อสถานที่ที่คุณเคยรีวิว"
+        />
 
         {isLoading ? (
-          <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-10 text-sm text-[#7c6f63]">
-            กำลังโหลดรีวิวของคุณ...
-          </div>
+          <StateNotice>กำลังโหลดรีวิวของคุณ...</StateNotice>
         ) : null}
 
         {isError ? (
-          <div className="rounded-[1.5rem] border border-[#f0c6c6] bg-[#fff5f5] px-6 py-10 text-sm text-[#9a4b4b]">
-            {error?.response?.data?.message || "ไม่สามารถดึงรายการรีวิวของคุณได้"}
-          </div>
+          <StateNotice tone="error">{error?.response?.data?.message || "ไม่สามารถดึงรายการรีวิวของคุณได้"}</StateNotice>
         ) : null}
 
         {!isLoading && !isError && reviews.length === 0 ? (
-          <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-10 text-sm text-[#7c6f63]">
-            คุณยังไม่มีรีวิวที่บันทึกไว้ตอนนี้
-          </div>
+          <StateNotice>คุณยังไม่มีรีวิวที่บันทึกไว้ตอนนี้</StateNotice>
         ) : null}
 
         {!isLoading && !isError && reviews.length > 0 && filteredReviews.length === 0 ? (
-          <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-10 text-sm text-[#7c6f63]">
-            ไม่พบสถานที่ที่ตรงกับชื่อที่ค้นหา
-          </div>
+          <StateNotice>ไม่พบสถานที่ที่ตรงกับชื่อที่ค้นหา</StateNotice>
         ) : null}
 
         {!isLoading && !isError && paginatedReviews.length > 0

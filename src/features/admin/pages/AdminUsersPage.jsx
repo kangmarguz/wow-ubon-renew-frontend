@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SectionCard } from "../../../shared/ui/SectionCard";
+import { StateNotice } from "../../../shared/ui/StateNotice";
 import { fetchAdminUsers, updateAdminUserRole } from "../api/adminUsersApi";
 
 function getRoleBadgeClassName(role) {
@@ -51,21 +52,15 @@ export function AdminUsersPage() {
         contentClassName="space-y-4"
       >
         {isLoading ? (
-          <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-10 text-sm text-[#7c6f63]">
-            กำลังโหลดผู้ใช้...
-          </div>
+          <StateNotice>กำลังโหลดผู้ใช้...</StateNotice>
         ) : null}
 
         {isError ? (
-          <div className="rounded-[1.5rem] border border-[#f0c6c6] bg-[#fff5f5] px-6 py-10 text-sm text-[#9a4b4b]">
-            {error?.response?.data?.message || "ไม่สามารถดึงรายการผู้ใช้ได้"}
-          </div>
+          <StateNotice tone="error">{error?.response?.data?.message || "ไม่สามารถดึงรายการผู้ใช้ได้"}</StateNotice>
         ) : null}
 
         {!isLoading && !isError && users.length === 0 ? (
-          <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-10 text-sm text-[#7c6f63]">
-            ยังไม่มีผู้ใช้ในระบบ
-          </div>
+          <StateNotice>ยังไม่มีผู้ใช้ในระบบ</StateNotice>
         ) : null}
 
         {!isLoading && !isError && users.length > 0 ? (

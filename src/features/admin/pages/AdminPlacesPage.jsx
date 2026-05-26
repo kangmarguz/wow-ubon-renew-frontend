@@ -2,9 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { PageIntro } from "../../../shared/ui/PageIntro";
+import { SearchFieldCard } from "../../../shared/ui/SearchFieldCard";
 import { SectionCard } from "../../../shared/ui/SectionCard";
+import { StateNotice } from "../../../shared/ui/StateNotice";
 import { getPlaceCategoryLabel } from "../../../shared/constants/placeCategories";
 import { ProfilePagination } from "../../profile/components/ProfilePagination";
+import { AdminActionDialog } from "../components/AdminActionDialog";
 import { approvePendingPlace, fetchPendingPlaces, rejectPendingPlace } from "../api/adminPlacesApi";
 
 const PAGE_SIZE = 10;
@@ -70,10 +73,6 @@ export function AdminPlacesPage() {
     }
   }, [currentPage, totalPages]);
 
-  const handleApprove = async (placeId) => {
-    await approveMutation.mutateAsync(placeId);
-  };
-
   return (
     <div className="space-y-8">
       <PageIntro
@@ -94,39 +93,23 @@ export function AdminPlacesPage() {
         descriptionClassName="text-[14px] leading-7 text-[#74685e]"
         contentClassName="space-y-4"
       >
-        <label className="block rounded-[1.5rem] border border-[#eadfce] bg-white/75 p-4">
-          <span className="mb-2 block text-sm font-semibold text-[#5b4a3b]">ค้นหาจากชื่อสถานที่</span>
-          <input
-            type="search"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="พิมพ์ชื่อสถานที่ที่ต้องการตรวจสอบ"
-            className="w-full rounded-[1.1rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3 text-sm text-[#43362c] outline-none transition placeholder:text-[#a59384] focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
-          />
-        </label>
+        <SearchFieldCard
+          label="ค้นหาจากชื่อสถานที่"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          placeholder="พิมพ์ชื่อสถานที่ที่ต้องการตรวจสอบ"
+        />
 
-        {isLoading ? (
-          <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-10 text-sm text-[#7c6f63]">
-            กำลังโหลดรายการรออนุมัติ...
-          </div>
-        ) : null}
+        {isLoading ? <StateNotice>กำลังโหลดรายการรออนุมัติ...</StateNotice> : null}
 
         {isError ? (
-          <div className="rounded-[1.5rem] border border-[#f0c6c6] bg-[#fff5f5] px-6 py-10 text-sm text-[#9a4b4b]">
-            {error?.response?.data?.message || "ไม่สามารถดึงรายการรออนุมัติได้"}
-          </div>
+          <StateNotice tone="error">{error?.response?.data?.message || "ไม่สามารถดึงรายการรออนุมัติได้"}</StateNotice>
         ) : null}
 
-        {!isLoading && !isError && pendingPlaces.length === 0 ? (
-          <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-10 text-sm text-[#7c6f63]">
-            ตอนนี้ไม่มีรายการรออนุมัติ
-          </div>
-        ) : null}
+        {!isLoading && !isError && pendingPlaces.length === 0 ? <StateNotice>ตอนนี้ไม่มีรายการรออนุมัติ</StateNotice> : null}
 
         {!isLoading && !isError && pendingPlaces.length > 0 && filteredPlaces.length === 0 ? (
-          <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-10 text-sm text-[#7c6f63]">
-            ไม่พบสถานที่ที่ตรงกับชื่อที่ค้นหา
-          </div>
+          <StateNotice>ไม่พบสถานที่ที่ตรงกับชื่อที่ค้นหา</StateNotice>
         ) : null}
 
         {!isLoading && !isError && paginatedPlaces.length > 0 ? (
@@ -165,7 +148,7 @@ export function AdminPlacesPage() {
                 <div className="flex flex-col gap-3 md:w-36">
                   <button
                     type="button"
-                    onClick={() => handleApprove(place.id)}
+                    onClick={() => approveMutation.mutate(place.id)}
                     disabled={approveMutation.isPending || rejectMutation.isPending}
                     className="rounded-full bg-[#2e5a43] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#234634] disabled:cursor-not-allowed disabled:opacity-60"
                   >
@@ -191,47 +174,33 @@ export function AdminPlacesPage() {
       </SectionCard>
 
       {rejectTarget ? (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-[#2b2119]/35 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-xl rounded-[1.8rem] border border-[#e2d5c7] bg-white p-6 shadow-[0_24px_60px_rgba(74,55,37,0.18)]">
-            <div className="text-xs tracking-[0.22em] text-[#9a836d]">REJECTION NOTE</div>
-            <h3 className="mt-2 text-2xl font-semibold text-[#3f3328]">ระบุเหตุผลที่ปฏิเสธรายการนี้</h3>
-            <p className="mt-2 text-sm leading-7 text-[#74685e]">ข้อความนี้จะถูกบันทึกไว้เพื่อให้ผู้ส่งรายการทราบว่าควรแก้ไขข้อมูลส่วนใดก่อนส่งใหม่</p>
-
-            <textarea
-              value={rejectionReason}
-              onChange={(event) => setRejectionReason(event.target.value)}
-              rows="6"
-              className="mt-5 w-full rounded-[1.4rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3.5 text-sm outline-none transition placeholder:text-[#9b8d80] focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
-              placeholder="เช่น ข้อมูลสถานที่ยังไม่ครบ รูปภาพไม่ชัด หรือพิกัดไม่ถูกต้อง"
-            />
-
-            <div className="mt-5 flex flex-col gap-3 md:flex-row md:justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setRejectTarget(null);
-                  setRejectionReason("");
-                }}
-                className="rounded-full border border-[#d6c7b8] px-5 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:text-[#4c3b2d]"
-              >
-                ยกเลิก
-              </button>
-              <button
-                type="button"
-                disabled={rejectMutation.isPending || !rejectionReason.trim()}
-                onClick={() =>
-                  rejectMutation.mutate({
-                    placeId: rejectTarget,
-                    rejectionReason: rejectionReason.trim()
-                  })
-                }
-                className="rounded-full bg-[#8f4e4e] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#763f3f] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {rejectMutation.isPending ? "กำลังปฏิเสธ..." : "ยืนยันการปฏิเสธ"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <AdminActionDialog
+          eyebrow="REJECTION NOTE"
+          title="ระบุเหตุผลที่ปฏิเสธรายการนี้"
+          description="ข้อความนี้จะถูกบันทึกไว้เพื่อให้ผู้ส่งรายการทราบว่าควรแก้ไขข้อมูลส่วนใดก่อนส่งใหม่"
+          confirmLabel="ยืนยันการปฏิเสธ"
+          confirmPendingLabel="กำลังปฏิเสธ..."
+          isPending={rejectMutation.isPending}
+          isConfirmDisabled={!rejectionReason.trim()}
+          onCancel={() => {
+            setRejectTarget(null);
+            setRejectionReason("");
+          }}
+          onConfirm={() =>
+            rejectMutation.mutate({
+              placeId: rejectTarget,
+              rejectionReason: rejectionReason.trim()
+            })
+          }
+        >
+          <textarea
+            value={rejectionReason}
+            onChange={(event) => setRejectionReason(event.target.value)}
+            rows="6"
+            className="w-full rounded-[1.4rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3.5 text-sm outline-none transition placeholder:text-[#9b8d80] focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
+            placeholder="เช่น ข้อมูลสถานที่ยังไม่ครบ รูปภาพไม่ชัด หรือพิกัดไม่ถูกต้อง"
+          />
+        </AdminActionDialog>
       ) : null}
     </div>
   );
