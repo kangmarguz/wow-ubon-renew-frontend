@@ -21,6 +21,7 @@ const placeSchema = z.object({
   category: z.enum(["RESTAURANT", "ACCOMMODATION", "ATTRACTION"]),
   district: z.string().min(2),
   address: z.string().min(5),
+  phoneNumber: z.string().optional(),
   description: z.string().min(20),
   latitude: z.number(),
   longitude: z.number()
@@ -67,6 +68,7 @@ export function SubmitPlacePage() {
       category: "RESTAURANT",
       district: defaultDistrict,
       address: "",
+      phoneNumber: "",
       description: "",
       latitude: defaultMapCenter[0],
       longitude: defaultMapCenter[1]
@@ -120,6 +122,7 @@ export function SubmitPlacePage() {
       category: editingPlace.category,
       district: editingPlace.district,
       address: editingPlace.address,
+      phoneNumber: editingPlace.phoneNumber || "",
       description: editingPlace.description,
       latitude: editingPlace.latitude,
       longitude: editingPlace.longitude
@@ -176,6 +179,7 @@ export function SubmitPlacePage() {
       category: "RESTAURANT",
       district: defaultDistrict,
       address: "",
+      phoneNumber: "",
       description: "",
       latitude: defaultMapCenter[0],
       longitude: defaultMapCenter[1]
@@ -369,6 +373,12 @@ export function SubmitPlacePage() {
             </div>
 
             <label className="block">
+              <span className="mb-2 block text-sm font-semibold text-[#5b4a3b]">เบอร์โทรศัพท์</span>
+              <input className={fieldClassName} placeholder="เช่น 0812345678" {...register("phoneNumber")} />
+              <span className="mt-2 block text-xs leading-6 text-[#8a7a6a]">ไม่บังคับกรอก แต่หากมี ระบบจะบันทึกลงฐานข้อมูลให้</span>
+            </label>
+
+            <label className="block">
               <span className="mb-2 block text-sm font-semibold text-[#5b4a3b]">รายละเอียด</span>
               <textarea
                 rows="7"
@@ -464,8 +474,8 @@ export function SubmitPlacePage() {
               ) : null}
             </div>
 
-            <div className="flex flex-col gap-4 border-t border-[#eadfce] pt-6 md:flex-row md:items-center md:justify-between">
-              <div className="text-sm leading-6 text-[#7b6f64]">
+            <div className="space-y-4 rounded-[1.6rem] border border-[#eadfce] bg-[linear-gradient(180deg,rgba(255,252,247,0.96),rgba(250,244,236,0.9))] p-4 md:p-5">
+              <div className="rounded-[1.3rem] border border-white/70 bg-white/55 px-4 py-3 text-sm leading-6 text-[#7b6f64]">
                 {isEditMode
                   ? editingPlace?.status === "APPROVED"
                     ? <>เมื่อบันทึกแล้ว ระบบจะใช้ข้อมูลล่าสุดของคุณและเปลี่ยนสถานะรายการกลับเป็น <span className="font-semibold text-[#4c3b2d]">รอตรวจสอบ</span></>
@@ -474,28 +484,31 @@ export function SubmitPlacePage() {
                       : "เมื่อบันทึกแล้ว ระบบจะใช้ข้อมูลและชุดรูปภาพล่าสุดตามที่คุณแก้ไขไว้ในฟอร์มนี้"
                   : <>เมื่อส่งแล้ว รายการจะเข้าสู่สถานะ <span className="font-semibold text-[#4c3b2d]">รอตรวจสอบ</span> ก่อนเผยแพร่บนเว็บไซต์</>}
               </div>
-              <div className="flex flex-wrap gap-3">
-                {isEditMode ? (
-                  <Link
-                    to="/my-places"
-                    className="inline-flex items-center justify-center rounded-full border border-[#d6c7b8] px-6 py-3 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:text-[#4c3b2d]"
+
+              <div className="flex justify-end">
+                <div className="flex w-full flex-col-reverse gap-3 sm:w-auto sm:flex-row sm:items-center">
+                  {isEditMode ? (
+                    <Link
+                      to="/my-places"
+                      className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-[#d7c5b4] bg-white/90 px-6 py-3 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d]"
+                    >
+                      ย้อนกลับ
+                    </Link>
+                  ) : null}
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center rounded-full bg-[#3f3328] px-7 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(63,51,40,0.14)] transition hover:bg-[#2f251d] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    ย้อนกลับ
-                  </Link>
-                ) : null}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="inline-flex items-center justify-center rounded-full bg-[#3f3328] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#2f251d] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isSubmitting
-                    ? "กำลังบันทึก..."
-                    : isEditMode
-                      ? editingPlace?.status === "REJECTED"
-                        ? "บันทึกและส่งกลับเข้าตรวจสอบ"
-                        : "บันทึกการแก้ไข"
-                      : "ส่งเข้าสู่ระบบเพื่อตรวจสอบ"}
-                </button>
+                    {isSubmitting
+                      ? "กำลังบันทึก..."
+                      : isEditMode
+                        ? editingPlace?.status === "REJECTED"
+                          ? "บันทึกและส่งกลับเข้าตรวจสอบ"
+                          : "บันทึกการแก้ไข"
+                        : "ส่งเข้าสู่ระบบเพื่อตรวจสอบ"}
+                  </button>
+                </div>
               </div>
             </div>
           </form>

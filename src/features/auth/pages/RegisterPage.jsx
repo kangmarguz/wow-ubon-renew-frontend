@@ -8,11 +8,17 @@ import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SectionCard } from "../../../shared/ui/SectionCard";
 import { registerUser } from "../api/authApi";
 
-const registerSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(8)
-});
+const registerSchema = z
+  .object({
+    name: z.string().min(2, "กรุณากรอกชื่ออย่างน้อย 2 ตัวอักษร"),
+    email: z.string().email("กรุณากรอกอีเมลให้ถูกต้อง"),
+    password: z.string().min(8, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร"),
+    confirmPassword: z.string().min(8, "กรุณายืนยันรหัสผ่าน")
+  })
+  .refine((values) => values.password === values.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "รหัสผ่านและยืนยันรหัสผ่านต้องตรงกัน"
+  });
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -26,13 +32,14 @@ export function RegisterPage() {
     defaultValues: {
       name: "",
       email: "",
-      password: ""
+      password: "",
+      confirmPassword: ""
     }
   });
 
   return (
     <div className="mx-auto max-w-xl">
-      <PageIntro eyebrow="สมัครสมาชิก" title="สร้างบัญชีผู้ใช้" description="เก็บชื่อ อีเมล และรหัสผ่านก่อนส่งข้อมูลไปที่ backend" />
+      <PageIntro eyebrow="สมัครสมาชิก" title="สร้างบัญชีผู้ใช้" description="เก็บชื่อ อีเมล รหัสผ่าน และตรวจสอบยืนยันรหัสผ่านก่อนส่งข้อมูลไปที่ backend" />
       <SectionCard
         title="สมัครสมาชิก"
         description="มีบัญชีอยู่แล้ว? กลับไปล็อกอินได้จากเมนูด้านล่าง"
@@ -49,7 +56,7 @@ export function RegisterPage() {
 
         <form
           className="space-y-4"
-          onSubmit={handleSubmit(async (values) => {
+          onSubmit={handleSubmit(async ({ confirmPassword, ...values }) => {
             try {
               setIsSubmitting(true);
               await registerUser(values);
@@ -78,6 +85,18 @@ export function RegisterPage() {
             <span className="mb-2 block text-sm font-semibold">รหัสผ่าน</span>
             <input type="password" className="w-full rounded-2xl border border-ink/10 px-4 py-3" {...register("password")} />
             {errors.password ? <span className="mt-1 block text-sm text-red-600">{errors.password.message}</span> : null}
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold">ยืนยันรหัสผ่าน</span>
+            <input
+              type="password"
+              className="w-full rounded-2xl border border-ink/10 px-4 py-3"
+              {...register("confirmPassword")}
+            />
+            {errors.confirmPassword ? (
+              <span className="mt-1 block text-sm text-red-600">{errors.confirmPassword.message}</span>
+            ) : null}
           </label>
 
           <button

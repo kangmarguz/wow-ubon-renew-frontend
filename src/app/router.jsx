@@ -6,6 +6,7 @@ import { AdminUsersPage } from "../features/admin/pages/AdminUsersPage";
 import { HomePage } from "../features/home/pages/HomePage";
 import { LoginPage } from "../features/auth/pages/LoginPage";
 import { RegisterPage } from "../features/auth/pages/RegisterPage";
+import { AccountPage } from "../features/profile/pages/AccountPage";
 import { MyPlacesPage } from "../features/profile/pages/MyPlacesPage";
 import { MyReviewsPage } from "../features/profile/pages/MyReviewsPage";
 import { PlaceDetailPage } from "../features/places/pages/PlaceDetailPage";
@@ -41,6 +42,7 @@ export function AppRouter() {
           <Route path="register" element={<RegisterPage />} />
 
           <Route element={<ProtectedRoute allowedRoles={["USER", "ADMIN"]} />}>
+            <Route path="account" element={<AccountPage />} />
             <Route path="submit-place" element={<SubmitPlacePage />} />
             <Route path="my-places/:placeId/edit" element={<SubmitPlacePage />} />
             <Route path="my-places" element={<MyPlacesPage />} />

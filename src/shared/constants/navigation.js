@@ -4,6 +4,7 @@ export const publicLinks = [
 ];
 
 export const userLinks = [
+  { to: "/account", label: "บัญชีของฉัน" },
   { to: "/submit-place", label: "เพิ่มสถานที่" },
   { to: "/my-places", label: "สถานที่ของฉัน" },
   { to: "/my-reviews", label: "รีวิวของฉัน" }

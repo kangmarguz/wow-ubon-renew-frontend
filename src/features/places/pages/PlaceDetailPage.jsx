@@ -170,6 +170,13 @@ export function PlaceDetailPage() {
             </div>
           </div>
 
+          {place.phoneNumber ? (
+            <div className="rounded-[1.4rem] border border-[#e2d5c7] bg-white/70 p-5">
+              <div className="text-xs tracking-[0.22em] text-[#9a836d]">เบอร์โทรศัพท์</div>
+              <div className="mt-2 text-base font-semibold text-[#3f3328]">{place.phoneNumber}</div>
+            </div>
+          ) : null}
+
           <div className="rounded-[1.4rem] border border-[#e2d5c7] bg-white/70 p-5">
             <div className="text-sm leading-8 text-[#6f6257]">{place.description}</div>
           </div>
