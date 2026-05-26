@@ -1,57 +1,32 @@
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SearchFieldCard } from "../../../shared/ui/SearchFieldCard";
 import { SectionCard } from "../../../shared/ui/SectionCard";
 import { StateNotice } from "../../../shared/ui/StateNotice";
+import { formatThaiDate } from "../../../shared/lib/formatDate";
 import { ReviewEditor } from "../../places/components/ReviewEditor";
 import { fetchMyReviews } from "../api/myReviewsApi";
 import { ProfilePagination } from "../components/ProfilePagination";
-
-const PAGE_SIZE = 10;
-
-function formatDate(value) {
-  if (!value) {
-    return "-";
-  }
-
-  return new Intl.DateTimeFormat("th-TH", {
-    dateStyle: "medium"
-  }).format(new Date(value));
-}
+import { useProfilePagination } from "../hooks/useProfilePagination";
+import { filterMyReviews, MY_REVIEWS_PAGE_SIZE } from "../lib/myReviews";
 
 export function MyReviewsPage() {
   const [editingReviewId, setEditingReviewId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const { data: reviews = [], isLoading, isError, error } = useQuery({
     queryKey: ["my-reviews"],
     queryFn: fetchMyReviews
   });
 
-  const filteredReviews = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
-
-    if (!normalizedSearch) {
-      return reviews;
-    }
-
-    return reviews.filter((review) => review.place.name.toLowerCase().includes(normalizedSearch));
-  }, [reviews, searchTerm]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredReviews.length / PAGE_SIZE));
-  const paginatedReviews = filteredReviews.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
+  const filteredReviews = filterMyReviews(reviews, searchTerm);
+  const {
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    paginatedItems: paginatedReviews
+  } = useProfilePagination(filteredReviews, MY_REVIEWS_PAGE_SIZE, [searchTerm]);
 
   return (
     <div className="space-y-8">
@@ -76,9 +51,7 @@ export function MyReviewsPage() {
           placeholder="พิมพ์ชื่อสถานที่ที่คุณเคยรีวิว"
         />
 
-        {isLoading ? (
-          <StateNotice>กำลังโหลดรีวิวของคุณ...</StateNotice>
-        ) : null}
+        {isLoading ? <StateNotice>กำลังโหลดรีวิวของคุณ...</StateNotice> : null}
 
         {isError ? (
           <StateNotice tone="error">{error?.response?.data?.message || "ไม่สามารถดึงรายการรีวิวของคุณได้"}</StateNotice>
@@ -107,14 +80,18 @@ export function MyReviewsPage() {
                         <span className="rounded-full border border-[#e3d4c4] bg-white/80 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-[#a06840]">
                           REVIEW
                         </span>
-                        <span className="text-xs tracking-[0.2em] text-[#8f7d6d]">บันทึกเมื่อ {formatDate(review.createdAt)}</span>
+                        <span className="text-xs tracking-[0.2em] text-[#8f7d6d]">
+                          บันทึกเมื่อ {formatThaiDate(review.createdAt)}
+                        </span>
                       </div>
 
                       <div>
                         <div className="text-xl font-semibold text-[#3f3328]">{review.place.name}</div>
                         <div className="mt-1 text-sm text-[#74685e]">
                           คะแนน {review.rating}/5
-                          {review.updatedAt && review.updatedAt !== review.createdAt ? ` · แก้ไขล่าสุด ${formatDate(review.updatedAt)}` : ""}
+                          {review.updatedAt && review.updatedAt !== review.createdAt
+                            ? ` · แก้ไขล่าสุด ${formatThaiDate(review.updatedAt)}`
+                            : ""}
                         </div>
                       </div>
 
