@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 import { adminLinks, userLinks } from "../../constants/navigation";
 import { MenuSection } from "./MenuSection";
 
-export function UserMenu({ user, onLogout }) {
+export function UserMenu({ user, onLogout, isPasswordResetLocked = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const menuRef = useRef(null);
@@ -62,8 +62,16 @@ export function UserMenu({ user, onLogout }) {
           <div className="mt-1 text-xs text-[#8c7a6a]">{user.email}</div>
         </div>
 
-        <MenuSection title="USER MENU" links={userLinks} />
-        {user.role === "ADMIN" ? <MenuSection title="ADMIN MENU" links={adminLinks} /> : null}
+        {isPasswordResetLocked ? (
+          <div className="border-b border-[#f1e5d7] px-4 py-4 text-sm leading-6 text-[#6f6257]">
+            ตอนนี้ระบบเปิดให้ใช้งานเฉพาะการเปลี่ยนรหัสผ่านใหม่เท่านั้น
+          </div>
+        ) : (
+          <>
+            <MenuSection title="USER MENU" links={userLinks} />
+            {user.role === "ADMIN" ? <MenuSection title="ADMIN MENU" links={adminLinks} /> : null}
+          </>
+        )}
 
         <div className="p-2">
           <button

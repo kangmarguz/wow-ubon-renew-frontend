@@ -10,7 +10,8 @@ import { PasswordField } from "../../../shared/ui/PasswordField";
 import { SectionCard } from "../../../shared/ui/SectionCard";
 
 const profileSchema = z.object({
-  name: z.string().min(2, "กรุณากรอกชื่ออย่างน้อย 2 ตัวอักษร")
+  name: z.string().min(2, "กรุณากรอกชื่ออย่างน้อย 2 ตัวอักษร"),
+  phoneNumber: z.string().min(9, "กรุณากรอกเบอร์โทรให้ถูกต้อง")
 });
 
 const passwordSchema = z
@@ -37,7 +38,8 @@ export function AccountPage() {
   } = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: user?.name || ""
+      name: user?.name || "",
+      phoneNumber: user?.phoneNumber || ""
     }
   });
 
@@ -81,6 +83,10 @@ export function AccountPage() {
             <div className="mt-2 text-sm text-[#6f6257]">{user?.email}</div>
           </div>
           <div className="rounded-[1.5rem] border border-[#e2d5c7] bg-white/80 p-5">
+            <div className="text-xs tracking-[0.22em] text-[#9a836d]">PHONE</div>
+            <div className="mt-2 text-sm text-[#6f6257]">{user?.phoneNumber || "-"}</div>
+          </div>
+          <div className="rounded-[1.5rem] border border-[#e2d5c7] bg-white/80 p-5">
             <div className="text-xs tracking-[0.22em] text-[#9a836d]">ROLE</div>
             <div className="mt-2 text-sm font-semibold text-[#5b4737]">{user?.role}</div>
           </div>
@@ -119,6 +125,17 @@ export function AccountPage() {
                 {profileErrors.name ? <span className="mt-1 block text-sm text-red-600">{profileErrors.name.message}</span> : null}
               </label>
 
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-[#5b4a3b]">เบอร์โทร</span>
+                <input
+                  className="w-full rounded-[1.2rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-3 text-sm text-[#43362c] outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
+                  {...registerProfile("phoneNumber")}
+                />
+                {profileErrors.phoneNumber ? (
+                  <span className="mt-1 block text-sm text-red-600">{profileErrors.phoneNumber.message}</span>
+                ) : null}
+              </label>
+
               <button
                 type="submit"
                 disabled={isUpdatingProfile}
@@ -142,7 +159,8 @@ export function AccountPage() {
               onSubmit={handleSubmitPassword(async ({ confirmNewPassword, ...values }) => {
                 try {
                   setIsUpdatingPassword(true);
-                  await updatePassword(values);
+                  const nextUser = await updatePassword(values);
+                  setUser(nextUser);
                   resetPasswordForm();
                   toast.success("เปลี่ยนรหัสผ่านเรียบร้อยแล้ว");
                 } catch (error) {

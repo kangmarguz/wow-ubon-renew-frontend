@@ -1,5 +1,5 @@
 import { Suspense, lazy } from "react";
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { useAuthStore } from "../features/auth/store/useAuthStore";
 import { AppShell } from "../shared/ui/AppShell";
 
@@ -15,10 +15,19 @@ const AdminReviewsPage = lazy(() =>
 const AdminUsersPage = lazy(() =>
   import("../features/admin/pages/AdminUsersPage").then((module) => ({ default: module.AdminUsersPage }))
 );
+const AdminPasswordResetsPage = lazy(() =>
+  import("../features/admin/pages/AdminPasswordResetsPage").then((module) => ({ default: module.AdminPasswordResetsPage }))
+);
 const HomePage = lazy(() => import("../features/home/pages/HomePage").then((module) => ({ default: module.HomePage })));
 const LoginPage = lazy(() => import("../features/auth/pages/LoginPage").then((module) => ({ default: module.LoginPage })));
+const ForgotPasswordPage = lazy(() =>
+  import("../features/auth/pages/ForgotPasswordPage").then((module) => ({ default: module.ForgotPasswordPage }))
+);
 const RegisterPage = lazy(() =>
   import("../features/auth/pages/RegisterPage").then((module) => ({ default: module.RegisterPage }))
+);
+const ChangePasswordPage = lazy(() =>
+  import("../features/auth/pages/ChangePasswordPage").then((module) => ({ default: module.ChangePasswordPage }))
 );
 const AccountPage = lazy(() =>
   import("../features/profile/pages/AccountPage").then((module) => ({ default: module.AccountPage }))
@@ -42,9 +51,15 @@ const SubmitPlacePage = lazy(() =>
 function ProtectedRoute({ allowedRoles }) {
   const token = useAuthStore((state) => state.token);
   const role = useAuthStore((state) => state.user?.role);
+  const mustChangePassword = useAuthStore((state) => state.user?.mustChangePassword);
+  const location = useLocation();
 
   if (!token) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (mustChangePassword && location.pathname !== "/change-password") {
+    return <Navigate to="/change-password" replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(role)) {
@@ -111,8 +126,24 @@ export function AppRouter() {
               </LazyPage>
             }
           />
+          <Route
+            path="forgot-password"
+            element={
+              <LazyPage>
+                <ForgotPasswordPage />
+              </LazyPage>
+            }
+          />
 
           <Route element={<ProtectedRoute allowedRoles={["USER", "ADMIN"]} />}>
+            <Route
+              path="change-password"
+              element={
+                <LazyPage>
+                  <ChangePasswordPage />
+                </LazyPage>
+              }
+            />
             <Route
               path="account"
               element={
@@ -185,6 +216,14 @@ export function AppRouter() {
               element={
                 <LazyPage>
                   <AdminUsersPage />
+                </LazyPage>
+              }
+            />
+            <Route
+              path="admin/password-resets"
+              element={
+                <LazyPage>
+                  <AdminPasswordResetsPage />
                 </LazyPage>
               }
             />

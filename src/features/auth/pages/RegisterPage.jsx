@@ -13,6 +13,7 @@ const registerSchema = z
   .object({
     name: z.string().min(2, "กรุณากรอกชื่ออย่างน้อย 2 ตัวอักษร"),
     email: z.string().email("กรุณากรอกอีเมลให้ถูกต้อง"),
+    phoneNumber: z.string().min(9, "กรุณากรอกเบอร์โทรให้ถูกต้อง"),
     password: z.string().min(8, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร"),
     confirmPassword: z.string().min(8, "กรุณายืนยันรหัสผ่าน")
   })
@@ -33,6 +34,7 @@ export function RegisterPage() {
     defaultValues: {
       name: "",
       email: "",
+      phoneNumber: "",
       password: "",
       confirmPassword: ""
     }
@@ -80,6 +82,12 @@ export function RegisterPage() {
             <span className="mb-2 block text-sm font-semibold">อีเมล</span>
             <input className="w-full rounded-2xl border border-ink/10 px-4 py-3" {...register("email")} />
             {errors.email ? <span className="mt-1 block text-sm text-red-600">{errors.email.message}</span> : null}
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold">เบอร์โทร</span>
+            <input className="w-full rounded-2xl border border-ink/10 px-4 py-3" {...register("phoneNumber")} />
+            {errors.phoneNumber ? <span className="mt-1 block text-sm text-red-600">{errors.phoneNumber.message}</span> : null}
           </label>
 
           <PasswordField

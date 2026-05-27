@@ -37,7 +37,7 @@ export function LoginPage() {
       const authPayload = await loginUser(values);
       setAuth(authPayload);
       toast.success("เข้าสู่ระบบสำเร็จ");
-      navigate("/");
+      navigate(authPayload.user.mustChangePassword ? "/change-password" : "/");
     } catch (error) {
       toast.error(error?.response?.data?.message || "เข้าสู่ระบบไม่สำเร็จ");
     } finally {
@@ -76,6 +76,12 @@ export function LoginPage() {
             inputProps={register("password")}
             autoComplete="current-password"
           />
+
+          <div className="flex justify-end">
+            <Link to="/forgot-password" className="text-sm font-medium text-[#8b6a4f] transition hover:text-[#6f523c]">
+              ลืมรหัสผ่าน?
+            </Link>
+          </div>
 
           <button
             type="submit"

@@ -17,5 +17,15 @@ export async function updateProfile(payload) {
 
 export async function updatePassword(payload) {
   const response = await http.patch("/auth/password", payload);
+  return response.data.data.user;
+}
+
+export async function createPasswordResetRequest(payload) {
+  const response = await http.post("/auth/password-reset-requests", payload);
   return response.data;
+}
+
+export async function completePasswordReset(payload) {
+  const response = await http.patch("/auth/complete-password-reset", payload);
+  return response.data.data.user;
 }

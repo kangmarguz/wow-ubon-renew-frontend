@@ -86,6 +86,7 @@ export function AdminUsersPage() {
                       </span>
                     </div>
                     <div className="text-sm text-[#74685e]">{user.email}</div>
+                    <div className="text-sm text-[#8c7a6a]">{user.phoneNumber || "ยังไม่มีเบอร์โทร"}</div>
                   </div>
 
                   <div className="flex items-center gap-3">

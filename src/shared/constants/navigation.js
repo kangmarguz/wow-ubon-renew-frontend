@@ -14,5 +14,6 @@ export const adminLinks = [
   { to: "/admin", label: "แอดมิน", end: true },
   { to: "/admin/places", label: "จัดการสถานที่" },
   { to: "/admin/reviews", label: "จัดการรีวิว" },
-  { to: "/admin/users", label: "จัดการผู้ใช้" }
+  { to: "/admin/users", label: "จัดการผู้ใช้" },
+  { to: "/admin/password-resets", label: "คำขอรีเซ็ตรหัสผ่าน" }
 ];
