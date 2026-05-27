@@ -34,8 +34,8 @@ export function AppShell() {
                   </div>
                 ) : (
                   <NavLink to="/" className="group inline-flex flex-col">
-                    <div className="font-display text-[1.5rem] leading-none text-[#31261d] transition group-hover:text-[#46372a]">
-                      ว้าวอุบล
+                    <div className="font-display font-bold text-[1.5rem] leading-none text-[#31261d] transition group-hover:text-[#46372a]">
+                      WOW Ubon
                     </div>
                     <div className="mt-1 hidden text-[11px] tracking-[0.24em] text-[#8a7a6a] md:block">
                       แพลตฟอร์มรวมข้อมูลร้านอาหาร ที่พัก และที่เที่ยว
