@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { useAuthStore } from "../features/auth/store/useAuthStore";
 import { AppShell } from "../shared/ui/AppShell";
+import { StateNotice } from "../shared/ui/StateNotice";
 
 const AdminDashboardPage = lazy(() =>
   import("../features/admin/pages/AdminDashboardPage").then((module) => ({ default: module.AdminDashboardPage }))
@@ -70,11 +71,7 @@ function ProtectedRoute({ allowedRoles }) {
 }
 
 function RouteLoadingFallback() {
-  return (
-    <div className="rounded-[1.6rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-10 text-sm text-[#7c6f63]">
-      กำลังเปิดหน้า...
-    </div>
-  );
+  return <StateNotice tone="loading">กำลังเปิดหน้า...</StateNotice>;
 }
 
 function LazyPage({ children }) {

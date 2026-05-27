@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { createPasswordResetRequest } from "../api/authApi";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SectionCard } from "../../../shared/ui/SectionCard";
+import { LoadingInline } from "../../../shared/ui/LoadingInline";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("กรุณากรอกอีเมลให้ถูกต้อง"),
@@ -79,7 +80,7 @@ export function ForgotPasswordPage() {
             disabled={isSubmitting}
             className="rounded-full bg-[#8b6a4f] px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? "กำลังส่งคำขอ..." : "ส่งคำขอรีเซ็ตรหัสผ่าน"}
+            {isSubmitting ? <LoadingInline label="กำลังส่งคำขอ..." size={16} /> : "ส่งคำขอรีเซ็ตรหัสผ่าน"}
           </button>
         </form>
       </SectionCard>

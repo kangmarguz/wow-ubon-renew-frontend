@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { PasswordField } from "../../../shared/ui/PasswordField";
 import { SectionCard } from "../../../shared/ui/SectionCard";
+import { LoadingInline } from "../../../shared/ui/LoadingInline";
 import { registerUser } from "../api/authApi";
 
 const registerSchema = z
@@ -111,7 +112,7 @@ export function RegisterPage() {
             disabled={isSubmitting}
             className="rounded-full bg-ember px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? "กำลังสมัครสมาชิก..." : "สมัครสมาชิก"}
+            {isSubmitting ? <LoadingInline label="กำลังสมัครสมาชิก..." size={16} /> : "สมัครสมาชิก"}
           </button>
         </form>
       </SectionCard>

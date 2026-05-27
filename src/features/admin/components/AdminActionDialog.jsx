@@ -1,3 +1,5 @@
+import { LoadingInline } from "../../../shared/ui/LoadingInline";
+
 export function AdminActionDialog({
   eyebrow,
   title,
@@ -39,7 +41,7 @@ export function AdminActionDialog({
             onClick={onConfirm}
             className={`rounded-full px-5 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${confirmClassName}`}
           >
-            {isPending ? confirmPendingLabel || confirmLabel : confirmLabel}
+            {isPending ? <LoadingInline label={confirmPendingLabel || confirmLabel} size={16} /> : confirmLabel}
           </button>
         </div>
       </div>

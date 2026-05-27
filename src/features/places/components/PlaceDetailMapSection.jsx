@@ -1,5 +1,6 @@
 import { Suspense, lazy } from "react";
 import { SectionCard } from "../../../shared/ui/SectionCard";
+import { LoadingInline } from "../../../shared/ui/LoadingInline";
 
 const PlaceStaticMap = lazy(() => import("./PlaceStaticMap").then((module) => ({ default: module.PlaceStaticMap })));
 
@@ -8,7 +9,7 @@ function MapLoadingFallback({ heightClassName }) {
     <div
       className={`flex items-center justify-center bg-[linear-gradient(180deg,#fbf6ef_0%,#f1e7db_100%)] text-sm text-[#7c6f63] ${heightClassName}`}
     >
-      กำลังโหลดแผนที่...
+      <LoadingInline label="กำลังโหลดแผนที่..." />
     </div>
   );
 }

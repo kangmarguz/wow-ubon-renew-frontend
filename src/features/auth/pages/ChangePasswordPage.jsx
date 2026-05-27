@@ -9,6 +9,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { PasswordField } from "../../../shared/ui/PasswordField";
 import { SectionCard } from "../../../shared/ui/SectionCard";
+import { LoadingInline } from "../../../shared/ui/LoadingInline";
 
 const forcedResetPasswordSchema = z
   .object({
@@ -90,7 +91,7 @@ export function ChangePasswordPage() {
             disabled={isSubmitting}
             className="rounded-full bg-[#3f3328] px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? "กำลังบันทึกรหัสผ่าน..." : "บันทึกรหัสผ่านใหม่"}
+            {isSubmitting ? <LoadingInline label="กำลังบันทึกรหัสผ่าน..." size={16} /> : "บันทึกรหัสผ่านใหม่"}
           </button>
         </form>
       </SectionCard>

@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, LockKeyhole, MessageSquare, PencilLine, Save, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import { LoadingInline } from "../../../shared/ui/LoadingInline";
 import { useAuthStore } from "../../auth/store/useAuthStore";
 import { createPlaceReview, updatePlaceReview } from "../api/publicPlacesApi";
 import { ReviewStars } from "./ReviewStars";
@@ -146,8 +147,14 @@ export function ReviewEditor({
           disabled={saveReviewMutation.isPending}
           className="inline-flex items-center gap-2 rounded-full bg-[#8b6a4f] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#74553e] disabled:cursor-not-allowed disabled:opacity-70"
         >
-          <Save size={16} aria-hidden="true" className={saveReviewMutation.isPending ? "animate-pulse" : ""} />
-          {saveReviewMutation.isPending ? "กำลังบันทึก..." : existingReview ? submitLabelUpdate : submitLabelCreate}
+          {saveReviewMutation.isPending ? (
+            <LoadingInline label="กำลังบันทึก..." size={16} />
+          ) : (
+            <>
+              <Save size={16} aria-hidden="true" />
+              {existingReview ? submitLabelUpdate : submitLabelCreate}
+            </>
+          )}
         </button>
       </div>
     </form>

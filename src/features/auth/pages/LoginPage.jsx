@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { PasswordField } from "../../../shared/ui/PasswordField";
 import { SectionCard } from "../../../shared/ui/SectionCard";
+import { LoadingInline } from "../../../shared/ui/LoadingInline";
 import { loginUser } from "../api/authApi";
 import { useAuthStore } from "../store/useAuthStore";
 
@@ -88,7 +89,7 @@ export function LoginPage() {
             disabled={isSubmitting}
             className="rounded-full bg-forest px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? "กำลังเข้าสู่ระบบ..." : "ล็อกอิน"}
+            {isSubmitting ? <LoadingInline label="กำลังเข้าสู่ระบบ..." size={16} /> : "ล็อกอิน"}
           </button>
         </form>
       </SectionCard>

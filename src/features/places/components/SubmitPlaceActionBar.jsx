@@ -1,5 +1,6 @@
 import { ArrowLeft, Save, SendHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
+import { LoadingInline } from "../../../shared/ui/LoadingInline";
 
 export function SubmitPlaceActionBar({ isEditMode, isSubmitting, submitLabel, submitHint, backLinkTo }) {
   const SubmitIcon = isEditMode ? Save : SendHorizontal;
@@ -25,8 +26,14 @@ export function SubmitPlaceActionBar({ isEditMode, isSubmitting, submitLabel, su
           disabled={isSubmitting}
           className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center gap-2 rounded-full bg-[#3f3328] px-7 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(63,51,40,0.14)] transition hover:bg-[#2f251d] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <SubmitIcon size={16} aria-hidden="true" className={isSubmitting ? "animate-pulse" : ""} />
-          {submitLabel}
+          {isSubmitting ? (
+            <LoadingInline label={submitLabel} size={16} />
+          ) : (
+            <>
+              <SubmitIcon size={16} aria-hidden="true" />
+              {submitLabel}
+            </>
+          )}
         </button>
       </div>
     </div>

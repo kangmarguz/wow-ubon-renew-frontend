@@ -6,6 +6,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SectionCard } from "../../../shared/ui/SectionCard";
+import { StateNotice } from "../../../shared/ui/StateNotice";
 import { fetchMyPlaceDetail } from "../../profile/api/myPlacesApi";
 import { createPlace, updatePlace, uploadPlaceImages } from "../api/placesApi";
 import { SubmitPlaceActionBar } from "../components/SubmitPlaceActionBar";
@@ -144,11 +145,7 @@ export function SubmitPlacePage() {
   }
 
   if (isEditMode && isLoadingPlace) {
-    return (
-      <div className="rounded-[1.8rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-12 text-sm text-[#7c6f63]">
-        กำลังโหลดข้อมูลสถานที่สำหรับแก้ไข...
-      </div>
-    );
+    return <StateNotice tone="loading">กำลังโหลดข้อมูลสถานที่สำหรับแก้ไข...</StateNotice>;
   }
 
   if (isEditMode && isPlaceError) {

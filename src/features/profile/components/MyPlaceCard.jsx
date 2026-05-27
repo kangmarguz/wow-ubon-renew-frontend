@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Ban, CircleAlert, Clock3, Eye, EyeOff, Pencil, RefreshCw, Star } from "lucide-react";
 import { getPlaceCategoryLabel } from "../../../shared/constants/placeCategories";
+import { LoadingInline } from "../../../shared/ui/LoadingInline";
 import { PlaceActionButton } from "../../../shared/ui/PlaceActionButton";
 import { PlaceStatusBadge } from "../../../shared/ui/PlaceStatusBadge";
 import { PlaceThumbnail } from "../../../shared/ui/PlaceThumbnail";
@@ -92,14 +93,18 @@ export function MyPlaceCard({
                 fullWidth={false}
                 className="disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {isInactive ? <Eye size={16} aria-hidden="true" /> : <EyeOff size={16} aria-hidden="true" />}
-                {isTogglingVisibility
-                  ? "กำลังบันทึก..."
-                  : isAdminHidden
-                    ? "แอดมินปิดการแสดงผล"
-                    : isInactive
-                      ? "เปิดการแสดงผลอีกครั้ง"
-                      : "ปิดการแสดงผล"}
+                {isTogglingVisibility ? (
+                  <LoadingInline label="กำลังบันทึก..." size={16} />
+                ) : (
+                  <>
+                    {isInactive ? <Eye size={16} aria-hidden="true" /> : <EyeOff size={16} aria-hidden="true" />}
+                    {isAdminHidden
+                      ? "แอดมินปิดการแสดงผล"
+                      : isInactive
+                        ? "เปิดการแสดงผลอีกครั้ง"
+                        : "ปิดการแสดงผล"}
+                  </>
+                )}
               </PlaceActionButton>
               {isAdminHidden ? (
                 <div className="rounded-[1.2rem] border border-[#eadbb8] bg-[#fff7e7] px-4 py-3 text-sm leading-6 text-[#8a6432]">
@@ -142,8 +147,14 @@ export function MyPlaceCard({
                 isPrimary
                 className="sm:col-span-2 disabled:cursor-not-allowed disabled:opacity-70"
               >
-                <RefreshCw size={16} aria-hidden="true" className={isSubmitting ? "animate-spin" : ""} />
-                {isSubmitting ? "กำลังส่ง..." : "ส่งกลับเข้าตรวจอีกครั้ง"}
+                {isSubmitting ? (
+                  <LoadingInline label="กำลังส่ง..." size={16} />
+                ) : (
+                  <>
+                    <RefreshCw size={16} aria-hidden="true" />
+                    ส่งกลับเข้าตรวจอีกครั้ง
+                  </>
+                )}
               </PlaceActionButton>
               <PlaceActionButton as={Link} to={`/my-places/${place.id}/edit`} tone="danger" className="sm:col-span-2">
                 <Eye size={16} aria-hidden="true" />

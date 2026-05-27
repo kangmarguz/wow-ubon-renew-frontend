@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { updatePassword, updateProfile } from "../../auth/api/authApi";
 import { useAuthStore } from "../../auth/store/useAuthStore";
 import { PageIntro } from "../../../shared/ui/PageIntro";
+import { LoadingInline } from "../../../shared/ui/LoadingInline";
 import { PasswordField } from "../../../shared/ui/PasswordField";
 import { SectionCard } from "../../../shared/ui/SectionCard";
 
@@ -141,7 +142,7 @@ export function AccountPage() {
                 disabled={isUpdatingProfile}
                 className="rounded-full bg-[#8b6a4f] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#74553e] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isUpdatingProfile ? "กำลังบันทึก..." : "บันทึกชื่อใหม่"}
+                {isUpdatingProfile ? <LoadingInline label="กำลังบันทึก..." size={16} /> : "บันทึกชื่อใหม่"}
               </button>
             </form>
           </SectionCard>
@@ -199,7 +200,7 @@ export function AccountPage() {
                 disabled={isUpdatingPassword}
                 className="rounded-full bg-[#3f3328] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#2f251d] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isUpdatingPassword ? "กำลังเปลี่ยนรหัสผ่าน..." : "บันทึกรหัสผ่านใหม่"}
+                {isUpdatingPassword ? <LoadingInline label="กำลังเปลี่ยนรหัสผ่าน..." size={16} /> : "บันทึกรหัสผ่านใหม่"}
               </button>
             </form>
           </SectionCard>

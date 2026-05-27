@@ -20,11 +20,7 @@ export function PlaceDetailPage() {
   });
 
   if (isLoading) {
-    return (
-      <div className="rounded-[1.8rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-12 text-sm text-[#7c6f63]">
-        กำลังโหลดรายละเอียดสถานที่...
-      </div>
-    );
+    return <StateNotice tone="loading">กำลังโหลดรายละเอียดสถานที่...</StateNotice>;
   }
 
   if (isError) {

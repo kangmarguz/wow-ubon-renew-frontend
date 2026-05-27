@@ -1,5 +1,6 @@
 import { Suspense, lazy } from "react";
 import { SectionCard } from "../../../shared/ui/SectionCard";
+import { LoadingInline } from "../../../shared/ui/LoadingInline";
 
 const PlaceLocationPickerMap = lazy(() =>
   import("./PlaceLocationPickerMap").then((module) => ({ default: module.PlaceLocationPickerMap }))
@@ -8,7 +9,7 @@ const PlaceLocationPickerMap = lazy(() =>
 function MapLoadingFallback() {
   return (
     <div className="flex h-[420px] w-full items-center justify-center bg-[linear-gradient(180deg,#fbf6ef_0%,#f1e7db_100%)] text-sm text-[#7c6f63]">
-      กำลังโหลดแผนที่...
+      <LoadingInline label="กำลังโหลดแผนที่..." />
     </div>
   );
 }
