@@ -50,21 +50,21 @@ export function AdminPlaceListItem({
         <div className="text-sm text-[#74685e]">
           {place.district}, {place.province}
         </div>
-        <div className="text-sm leading-7 text-[#6f6257] line-clamp-2">{place.description}</div>
+        <div className="line-clamp-2 text-sm leading-7 text-[#6f6257]">{place.description}</div>
         <div className="text-xs text-[#8c7a6a]">
           ผู้ส่ง: {place.createdBy?.name || "-"}
           {place.createdBy?.email ? ` (${place.createdBy.email})` : ""}
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 md:w-44">
+      <div className="flex flex-col gap-3 md:w-56">
         {activeTab === "PENDING" ? (
           <>
             <button
               type="button"
               onClick={onApprove}
               disabled={isBusy}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2e5a43] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#234634] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#2e5a43] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#234634] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Check size={16} aria-hidden="true" />
               อนุมัติ
@@ -73,7 +73,7 @@ export function AdminPlaceListItem({
               type="button"
               onClick={onReject}
               disabled={isBusy}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d7b1b1] px-4 py-2.5 text-sm font-semibold text-[#8f4e4e] transition hover:bg-[#fff3f3] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[#d7b1b1] px-4 py-2.5 text-sm font-semibold text-[#8f4e4e] transition hover:bg-[#fff3f3] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <X size={16} aria-hidden="true" />
               ปฏิเสธ
@@ -82,7 +82,7 @@ export function AdminPlaceListItem({
               type="button"
               onClick={onDeactivate}
               disabled={isBusy}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d6c7b8] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[#d6c7b8] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Ban size={16} aria-hidden="true" />
               ปิดการแสดงผล
@@ -95,7 +95,7 @@ export function AdminPlaceListItem({
             type="button"
             onClick={onDeactivate}
             disabled={isBusy}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d6c7b8] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[#d6c7b8] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <Ban size={16} aria-hidden="true" />
             ปิดการแสดงผล
@@ -107,7 +107,7 @@ export function AdminPlaceListItem({
             type="button"
             onClick={onActivate}
             disabled={isBusy}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#c8d7cd] bg-[#edf7ef] px-4 py-2.5 text-sm font-semibold text-[#2f6b41] transition hover:border-[#97b9a3] hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[#c8d7cd] bg-[#edf7ef] px-4 py-2.5 text-sm font-semibold text-[#2f6b41] transition hover:border-[#97b9a3] hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
           >
             <RotateCcw size={16} aria-hidden="true" />
             เปิดการแสดงผลอีกครั้ง

@@ -8,7 +8,7 @@ export const myPlacesStatusConfig = {
     badgeClassName: "border-[#cfe4d4] bg-[#edf7ef] text-[#2f6b41]",
     panelClassName: "border-[#dbe9df] bg-[linear-gradient(180deg,rgba(239,248,241,0.92),rgba(255,255,255,1))]",
     titleClassName: "text-[#2f6b41]",
-    description: "สถานที่นี้ผ่านการอนุมัติแล้ว และคุณสามารถเปิดหรือปิดการแสดงผลบนหน้า public ได้เอง"
+    description: "สถานที่นี้ผ่านการอนุมัติแล้ว คุณสามารถเปิดหรือปิดการแสดงผลได้ และหากแก้ไขข้อมูล รายการจะกลับเข้าสู่คิวตรวจสอบอีกครั้ง"
   },
   PENDING: {
     label: "รอตรวจสอบ",
@@ -30,9 +30,7 @@ export function filterAndSortMyPlaces(places, { searchTerm, statusFilter, visibi
   return places
     .filter((place) => {
       const matchesSearch =
-        searchTerm.trim().length === 0
-          ? true
-          : place.name.toLowerCase().includes(searchTerm.trim().toLowerCase());
+        searchTerm.trim().length === 0 ? true : place.name.toLowerCase().includes(searchTerm.trim().toLowerCase());
       const matchesStatus = statusFilter === "ALL" ? true : place.status === statusFilter;
       const matchesVisibility =
         visibilityFilter === "ALL"

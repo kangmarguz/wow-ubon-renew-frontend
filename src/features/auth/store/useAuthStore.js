@@ -12,7 +12,13 @@ export const useAuthStore = create(
       ...initialState,
       setAuth: ({ token, user }) => set({ token, user }),
       setUser: (user) => set((state) => ({ ...state, user })),
-      clearAuth: () => set(initialState)
+      clearAuth: () => {
+        set(initialState);
+
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem("wow-ubon-auth");
+        }
+      }
     }),
     {
       name: "wow-ubon-auth",

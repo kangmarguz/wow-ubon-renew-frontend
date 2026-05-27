@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SectionCard } from "../../../shared/ui/SectionCard";
 import { StateNotice } from "../../../shared/ui/StateNotice";
+import { AdminActionDialog } from "../../admin/components/AdminActionDialog";
 import { fetchMyPlaces, resubmitMyPlace, updateMyPlaceVisibility } from "../api/myPlacesApi";
 import { MyPlaceCard } from "../components/MyPlaceCard";
 import { MyPlacesFilters } from "../components/MyPlacesFilters";
@@ -25,6 +26,7 @@ export function MyPlacesPage() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [visibilityFilter, setVisibilityFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("latest");
+  const [visibilityTarget, setVisibilityTarget] = useState(null);
 
   const { data: places = [], isLoading, isError, error } = useQuery({
     queryKey: ["my-places"],
@@ -46,6 +48,7 @@ export function MyPlacesPage() {
     mutationFn: ({ placeId, isActive }) => updateMyPlaceVisibility(placeId, isActive),
     onSuccess(_data, variables) {
       toast.success(variables.isActive ? "เปิดการแสดงผลของสถานที่อีกครั้งแล้ว" : "ปิดการแสดงผลของสถานที่แล้ว");
+      setVisibilityTarget(null);
       queryClient.invalidateQueries({ queryKey: ["my-places"] });
       queryClient.invalidateQueries({ queryKey: ["places"] });
     },
@@ -54,16 +57,46 @@ export function MyPlacesPage() {
     }
   });
 
+  function handleToggleVisibility(place) {
+    setVisibilityTarget(place);
+  }
+
+  function handleConfirmVisibility() {
+    if (!visibilityTarget) {
+      return;
+    }
+
+    visibilityMutation.mutate({
+      placeId: visibilityTarget.id,
+      isActive: !visibilityTarget.isActive
+    });
+  }
+
   const filteredPlaces = filterAndSortMyPlaces(places, {
     searchTerm,
     statusFilter,
     visibilityFilter,
     sortBy
   });
+
   const hasActiveFilters =
     searchTerm.trim().length > 0 || statusFilter !== "ALL" || visibilityFilter !== "ALL" || sortBy !== "latest";
   const emptyMessage = getMyPlacesEmptyMessage(places, filteredPlaces, hasActiveFilters);
   const summary = getMyPlacesSummary(places);
+  const isActivatingVisibility = visibilityTarget ? !visibilityTarget.isActive : false;
+  const visibilityDialogTitle = isActivatingVisibility
+    ? "ยืนยันการเปิดการแสดงผล"
+    : "ยืนยันการปิดการแสดงผล";
+  const visibilityDialogDescription = isActivatingVisibility
+    ? "เมื่อเปิดการแสดงผลอีกครั้ง สถานที่นี้จะกลับไปแสดงบนหน้าสาธารณะทันที"
+    : "เมื่อปิดการแสดงผล สถานที่นี้จะไม่แสดงบนหน้าสาธารณะจนกว่าคุณจะเปิดอีกครั้ง";
+  const visibilityDialogConfirmLabel = isActivatingVisibility
+    ? "เปิดการแสดงผลอีกครั้ง"
+    : "ปิดการแสดงผล";
+  const visibilityDialogPendingLabel = isActivatingVisibility
+    ? "กำลังเปิดการแสดงผล..."
+    : "กำลังปิดการแสดงผล...";
+
   const {
     currentPage,
     setCurrentPage,
@@ -165,12 +198,7 @@ export function MyPlacesPage() {
                     setExpandedRejectedId((current) => (current === place.id ? null : place.id))
                   }
                   onResubmit={() => resubmitMutation.mutate(place.id)}
-                  onToggleVisibility={() =>
-                    visibilityMutation.mutate({
-                      placeId: place.id,
-                      isActive: !place.isActive
-                    })
-                  }
+                  onToggleVisibility={() => handleToggleVisibility(place)}
                 />
               );
             })
@@ -180,6 +208,30 @@ export function MyPlacesPage() {
           <ProfilePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         ) : null}
       </SectionCard>
+
+      {visibilityTarget ? (
+        <AdminActionDialog
+          eyebrow="จัดการการแสดงผล"
+          title={visibilityDialogTitle}
+          description={visibilityDialogDescription}
+          cancelLabel="ยังไม่ดำเนินการ"
+          confirmLabel={visibilityDialogConfirmLabel}
+          confirmPendingLabel={visibilityDialogPendingLabel}
+          confirmTone={isActivatingVisibility ? "success" : "danger"}
+          isPending={visibilityMutation.isPending}
+          onCancel={() => setVisibilityTarget(null)}
+          onConfirm={handleConfirmVisibility}
+        >
+          <div className="rounded-[1.25rem] border border-[#eadfce] bg-[#faf5ee] px-4 py-3 text-sm leading-7 text-[#6f5e4f]">
+            <div className="font-semibold text-[#4c3b2d]">{visibilityTarget.name}</div>
+            <div className="mt-1">
+              {isActivatingVisibility
+                ? "รายการนี้จะกลับไปให้คนทั่วไปเข้าดูได้อีกครั้ง"
+                : "รายการนี้จะถูกซ่อนออกจากหน้าสาธารณะทันที"}
+            </div>
+          </div>
+        </AdminActionDialog>
+      ) : null}
     </div>
   );
 }

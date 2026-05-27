@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../features/auth/store/useAuthStore";
 import { publicLinks } from "../constants/navigation";
 import { MobileNavDrawer } from "./app-shell/MobileNavDrawer";
@@ -6,9 +6,15 @@ import { NavItem } from "./app-shell/NavItem";
 import { UserMenu } from "./app-shell/UserMenu";
 
 export function AppShell() {
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const isPasswordResetLocked = Boolean(user?.mustChangePassword);
+
+  function handleLogout() {
+    clearAuth();
+    navigate("/", { replace: true });
+  }
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f7f1e9_0%,#fbf8f3_26%,#f6efe6_100%)]">
@@ -51,11 +57,11 @@ export function AppShell() {
               )}
 
               <div className="flex items-center gap-3">
-                <MobileNavDrawer user={user} onLogout={clearAuth} isPasswordResetLocked={isPasswordResetLocked} />
+                <MobileNavDrawer user={user} onLogout={handleLogout} isPasswordResetLocked={isPasswordResetLocked} />
 
                 <div className="hidden items-center gap-2 md:flex">
                   {user ? (
-                    <UserMenu user={user} onLogout={clearAuth} isPasswordResetLocked={isPasswordResetLocked} />
+                    <UserMenu user={user} onLogout={handleLogout} isPasswordResetLocked={isPasswordResetLocked} />
                   ) : (
                     <NavItem to="/login" label="เข้าสู่ระบบ" />
                   )}

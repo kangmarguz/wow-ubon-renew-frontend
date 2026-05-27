@@ -36,6 +36,7 @@ export function MyPlaceCard({
   const isPending = place.status === "PENDING";
   const isApproved = place.status === "APPROVED";
   const isInactive = place.isActive === false;
+  const isAdminHidden = isInactive && place.hiddenByAdmin;
 
   return (
     <div className={`rounded-[1.7rem] border p-5 shadow-[0_12px_28px_rgba(74,55,37,0.06)] ${status.panelClassName}`}>
@@ -104,22 +105,35 @@ export function MyPlaceCard({
         <div className="w-full xl:ml-auto xl:max-w-[25rem]">
           {isApproved ? (
             <div className="ml-auto grid w-fit gap-3">
-              <Link
-                to={`/places/${place.slug}`}
-                className={getActionButtonClassName({ tone: "success", fullWidth: false })}
-              >
-                <Eye size={16} aria-hidden="true" />
-                ดูหน้าสาธารณะ
-              </Link>
+              {!isInactive ? (
+                <Link
+                  to={`/places/${place.slug}`}
+                  className={getActionButtonClassName({ tone: "success", fullWidth: false })}
+                >
+                  <Eye size={16} aria-hidden="true" />
+                  ดูหน้าสาธารณะ
+                </Link>
+              ) : null}
               <button
                 type="button"
                 onClick={onToggleVisibility}
-                disabled={isTogglingVisibility}
+                disabled={isTogglingVisibility || isAdminHidden}
                 className={`${getActionButtonClassName({ tone: "neutral", fullWidth: false })} disabled:cursor-not-allowed disabled:opacity-70`}
               >
                 {isInactive ? <Eye size={16} aria-hidden="true" /> : <EyeOff size={16} aria-hidden="true" />}
-                {isTogglingVisibility ? "กำลังบันทึก..." : isInactive ? "เปิดการแสดงผลอีกครั้ง" : "ปิดการแสดงผล"}
+                {isTogglingVisibility
+                  ? "กำลังบันทึก..."
+                  : isAdminHidden
+                    ? "แอดมินปิดการแสดงผล"
+                    : isInactive
+                      ? "เปิดการแสดงผลอีกครั้ง"
+                      : "ปิดการแสดงผล"}
               </button>
+              {isAdminHidden ? (
+                <div className="rounded-[1.2rem] border border-[#eadbb8] bg-[#fff7e7] px-4 py-3 text-sm leading-6 text-[#8a6432]">
+                  แอดมินปิดการแสดงผลของรายการนี้อยู่ คุณยังไม่สามารถเปิดกลับได้เอง
+                </div>
+              ) : null}
               <Link
                 to={`/my-places/${place.id}/edit`}
                 className={getActionButtonClassName({ tone: "neutral", fullWidth: false })}
