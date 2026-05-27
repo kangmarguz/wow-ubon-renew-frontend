@@ -14,3 +14,10 @@ export async function resubmitMyPlace(placeId) {
   const response = await http.post(`/places/${placeId}/submit-for-review`);
   return response.data.data.place;
 }
+
+export async function updateMyPlaceVisibility(placeId, isActive) {
+  const response = await http.patch(`/my/places/${placeId}/visibility`, {
+    isActive
+  });
+  return response.data.data.place;
+}

@@ -1,19 +1,29 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SectionCard } from "../../../shared/ui/SectionCard";
-import { fetchMyPlaces, resubmitMyPlace } from "../api/myPlacesApi";
+import { StateNotice } from "../../../shared/ui/StateNotice";
+import { fetchMyPlaces, resubmitMyPlace, updateMyPlaceVisibility } from "../api/myPlacesApi";
 import { MyPlaceCard } from "../components/MyPlaceCard";
 import { MyPlacesFilters } from "../components/MyPlacesFilters";
 import { ProfilePagination } from "../components/ProfilePagination";
 import { useProfilePagination } from "../hooks/useProfilePagination";
-import { filterAndSortMyPlaces, getMyPlacesEmptyMessage, myPlacesStatusConfig, MY_PLACES_PAGE_SIZE } from "../lib/myPlaces";
+import {
+  filterAndSortMyPlaces,
+  getMyPlacesEmptyMessage,
+  getMyPlacesSummary,
+  myPlacesStatusConfig,
+  MY_PLACES_PAGE_SIZE
+} from "../lib/myPlaces";
 
 export function MyPlacesPage() {
   const queryClient = useQueryClient();
   const [expandedRejectedId, setExpandedRejectedId] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [visibilityFilter, setVisibilityFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("latest");
 
   const { data: places = [], isLoading, isError, error } = useQuery({
@@ -32,54 +42,107 @@ export function MyPlacesPage() {
     }
   });
 
-  const filteredPlaces = filterAndSortMyPlaces(places, statusFilter, sortBy);
-  const emptyMessage = getMyPlacesEmptyMessage(places, filteredPlaces);
+  const visibilityMutation = useMutation({
+    mutationFn: ({ placeId, isActive }) => updateMyPlaceVisibility(placeId, isActive),
+    onSuccess(_data, variables) {
+      toast.success(variables.isActive ? "เปิดการแสดงผลของสถานที่อีกครั้งแล้ว" : "ปิดการแสดงผลของสถานที่แล้ว");
+      queryClient.invalidateQueries({ queryKey: ["my-places"] });
+      queryClient.invalidateQueries({ queryKey: ["places"] });
+    },
+    onError(mutationError) {
+      toast.error(mutationError?.response?.data?.message || "อัปเดตการแสดงผลของสถานที่ไม่สำเร็จ");
+    }
+  });
+
+  const filteredPlaces = filterAndSortMyPlaces(places, {
+    searchTerm,
+    statusFilter,
+    visibilityFilter,
+    sortBy
+  });
+  const hasActiveFilters =
+    searchTerm.trim().length > 0 || statusFilter !== "ALL" || visibilityFilter !== "ALL" || sortBy !== "latest";
+  const emptyMessage = getMyPlacesEmptyMessage(places, filteredPlaces, hasActiveFilters);
+  const summary = getMyPlacesSummary(places);
   const {
     currentPage,
     setCurrentPage,
     totalPages,
     paginatedItems: paginatedPlaces
-  } = useProfilePagination(filteredPlaces, MY_PLACES_PAGE_SIZE, [statusFilter, sortBy]);
+  } = useProfilePagination(filteredPlaces, MY_PLACES_PAGE_SIZE, [searchTerm, statusFilter, visibilityFilter, sortBy]);
 
   return (
     <div className="space-y-8">
       <PageIntro
         eyebrow="โปรไฟล์"
         title="สถานที่ของฉัน"
-        description="ติดตามสถานะสถานที่ที่คุณส่งเข้าระบบทั้งหมดได้จากหน้านี้ โดยเน้นให้เห็นชัดว่ารายการไหนเผยแพร่แล้ว รายการไหนกำลังรอตรวจสอบ รายการไหนต้องแก้ไข และรายการไหนถูกปิดการแสดงผลโดยแอดมิน"
+        description="ติดตามสถานะสถานที่ที่คุณส่งเข้าระบบทั้งหมดได้จากหน้านี้ พร้อมจัดการรายการที่ผ่านอนุมัติแล้วด้วยการเปิดหรือปิดการแสดงผลบนหน้า public ตามต้องการ"
       />
 
       <SectionCard
-        title="สถานะรายการที่ส่ง"
-        description="ข้อมูลชุดนี้ดึงจาก backend จริง และแสดงสถานะแต่ละรายการด้วยโทนสีแยกกันให้เห็นได้ทันที"
+        title="ภาพรวมรายการของฉัน"
+        description="สรุปสถานะของสถานที่ทั้งหมดที่คุณส่งเข้าระบบ เพื่อให้รู้ทันทีว่ารายการไหนรอตรวจ รายการไหนต้องแก้ไข และรายการไหนกำลังเผยแพร่อยู่"
+        className="border-[#eadfce] bg-[linear-gradient(180deg,rgba(255,253,249,0.98),rgba(250,244,236,0.94))]"
+        titleClassName="text-[1.7rem] text-[#3f3328]"
+        descriptionClassName="text-[14px] leading-7 text-[#74685e]"
+        contentClassName="space-y-4"
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          {[
+            { label: "ทั้งหมด", value: summary.total },
+            { label: "รอตรวจ", value: summary.pending },
+            { label: "ไม่ผ่าน", value: summary.rejected },
+            { label: "เผยแพร่อยู่", value: summary.visible },
+            { label: "ซ่อนไว้", value: summary.hidden }
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-[1.5rem] border border-[#e5d8cb] bg-white/88 px-5 py-4 shadow-[0_10px_24px_rgba(74,55,37,0.04)]"
+            >
+              <div className="text-xs tracking-[0.18em] text-[#9a836d]">{item.label}</div>
+              <div className="mt-2 text-[1.9rem] font-semibold text-[#3f3328]">{item.value}</div>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="จัดการรายการ"
+        description="กรอง ค้นหา และจัดการ action ของแต่ละสถานที่ได้จากจุดเดียว โดย action จะเปลี่ยนตามสถานะของรายการนั้นโดยอัตโนมัติ"
         className="border-[#eadfce] bg-[linear-gradient(180deg,rgba(255,253,249,0.98),rgba(250,244,236,0.94))]"
         titleClassName="text-[1.7rem] text-[#3f3328]"
         descriptionClassName="text-[14px] leading-7 text-[#74685e]"
         contentClassName="space-y-4"
       >
         <MyPlacesFilters
+          searchTerm={searchTerm}
           statusFilter={statusFilter}
+          visibilityFilter={visibilityFilter}
           sortBy={sortBy}
+          onSearchTermChange={setSearchTerm}
           onStatusFilterChange={setStatusFilter}
+          onVisibilityFilterChange={setVisibilityFilter}
           onSortByChange={setSortBy}
         />
 
-        {isLoading ? (
-          <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-10 text-sm text-[#7c6f63]">
-            กำลังโหลดสถานที่ของคุณ...
-          </div>
-        ) : null}
+        {isLoading ? <StateNotice>กำลังโหลดสถานที่ของคุณ...</StateNotice> : null}
 
-        {isError ? (
-          <div className="rounded-[1.5rem] border border-[#f0c6c6] bg-[#fff5f5] px-6 py-10 text-sm text-[#9a4b4b]">
-            {error?.response?.data?.message || "ไม่สามารถดึงรายการสถานที่ของคุณได้"}
-          </div>
-        ) : null}
+        {isError ? <StateNotice tone="error">{error?.response?.data?.message || "ไม่สามารถดึงรายการสถานที่ของคุณได้"}</StateNotice> : null}
 
         {!isLoading && !isError && emptyMessage ? (
-          <div className="rounded-[1.5rem] border border-dashed border-[#d7c5b4] bg-[#fffaf4] px-6 py-10 text-sm text-[#7c6f63]">
-            {emptyMessage}
-          </div>
+          <StateNotice>
+            <div className="space-y-4">
+              <div>{emptyMessage}</div>
+              {places.length === 0 ? (
+                <Link
+                  to="/submit-place"
+                  className="inline-flex rounded-full bg-[#8b6a4f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#74553e]"
+                >
+                  เพิ่มสถานที่แรกของฉัน
+                </Link>
+              ) : null}
+            </div>
+          </StateNotice>
         ) : null}
 
         {!isLoading && !isError && paginatedPlaces.length > 0
@@ -87,6 +150,8 @@ export function MyPlacesPage() {
               const status = myPlacesStatusConfig[place.status] || myPlacesStatusConfig.PENDING;
               const isExpanded = expandedRejectedId === place.id;
               const isSubmitting = resubmitMutation.isPending && resubmitMutation.variables === place.id;
+              const isTogglingVisibility =
+                visibilityMutation.isPending && visibilityMutation.variables?.placeId === place.id;
 
               return (
                 <MyPlaceCard
@@ -95,10 +160,17 @@ export function MyPlacesPage() {
                   status={status}
                   isExpanded={isExpanded}
                   isSubmitting={isSubmitting}
+                  isTogglingVisibility={isTogglingVisibility}
                   onToggleRejectedReason={() =>
                     setExpandedRejectedId((current) => (current === place.id ? null : place.id))
                   }
                   onResubmit={() => resubmitMutation.mutate(place.id)}
+                  onToggleVisibility={() =>
+                    visibilityMutation.mutate({
+                      placeId: place.id,
+                      isActive: !place.isActive
+                    })
+                  }
                 />
               );
             })

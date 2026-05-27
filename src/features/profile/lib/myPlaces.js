@@ -8,7 +8,7 @@ export const myPlacesStatusConfig = {
     badgeClassName: "border-[#cfe4d4] bg-[#edf7ef] text-[#2f6b41]",
     panelClassName: "border-[#dbe9df] bg-[linear-gradient(180deg,rgba(239,248,241,0.92),rgba(255,255,255,1))]",
     titleClassName: "text-[#2f6b41]",
-    description: "สถานที่นี้ผ่านการอนุมัติแล้วและกำลังแสดงผลบนเว็บไซต์"
+    description: "สถานที่นี้ผ่านการอนุมัติแล้ว และคุณสามารถเปิดหรือปิดการแสดงผลบนหน้า public ได้เอง"
   },
   PENDING: {
     label: "รอตรวจสอบ",
@@ -26,9 +26,23 @@ export const myPlacesStatusConfig = {
   }
 };
 
-export function filterAndSortMyPlaces(places, statusFilter, sortBy) {
+export function filterAndSortMyPlaces(places, { searchTerm, statusFilter, visibilityFilter, sortBy }) {
   return places
-    .filter((place) => (statusFilter === "ALL" ? true : place.status === statusFilter))
+    .filter((place) => {
+      const matchesSearch =
+        searchTerm.trim().length === 0
+          ? true
+          : place.name.toLowerCase().includes(searchTerm.trim().toLowerCase());
+      const matchesStatus = statusFilter === "ALL" ? true : place.status === statusFilter;
+      const matchesVisibility =
+        visibilityFilter === "ALL"
+          ? true
+          : visibilityFilter === "VISIBLE"
+            ? place.status === "APPROVED" && place.isActive
+            : place.status === "APPROVED" && !place.isActive;
+
+      return matchesSearch && matchesStatus && matchesVisibility;
+    })
     .sort((left, right) => {
       if (sortBy === "oldest") {
         return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
@@ -38,11 +52,11 @@ export function filterAndSortMyPlaces(places, statusFilter, sortBy) {
         return left.name.localeCompare(right.name, "th");
       }
 
-      if (sortBy === "rating") {
-        return Number(right.averageRating || 0) - Number(left.averageRating || 0);
+      if (sortBy === "updated") {
+        return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
       }
 
-      return new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime();
+      return new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
     });
 }
 
@@ -50,14 +64,24 @@ export function formatMyPlaceDate(value) {
   return formatThaiDate(value);
 }
 
-export function getMyPlacesEmptyMessage(places, filteredPlaces) {
+export function getMyPlacesEmptyMessage(places, filteredPlaces, hasActiveFilters = false) {
   if (places.length === 0) {
     return "คุณยังไม่มีสถานที่ที่ส่งเข้าระบบตอนนี้";
   }
 
   if (filteredPlaces.length === 0) {
-    return "ไม่พบรายการที่ตรงกับตัวกรองที่เลือก";
+    return hasActiveFilters ? "ไม่พบรายการที่ตรงกับตัวกรองหรือคำค้นหาที่เลือก" : "ยังไม่มีรายการในสถานะนี้";
   }
 
   return null;
+}
+
+export function getMyPlacesSummary(places) {
+  return {
+    total: places.length,
+    pending: places.filter((place) => place.status === "PENDING").length,
+    rejected: places.filter((place) => place.status === "REJECTED").length,
+    visible: places.filter((place) => place.status === "APPROVED" && place.isActive).length,
+    hidden: places.filter((place) => place.status === "APPROVED" && !place.isActive).length
+  };
 }

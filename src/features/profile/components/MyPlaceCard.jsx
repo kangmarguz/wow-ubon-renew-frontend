@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Ban, CircleAlert, Clock3, Eye, ImageOff, Pencil, RefreshCw, Star } from "lucide-react";
+import { Ban, CircleAlert, Clock3, Eye, EyeOff, ImageOff, Pencil, RefreshCw, Star } from "lucide-react";
 import { getPlaceCategoryLabel } from "../../../shared/constants/placeCategories";
 import { formatMyPlaceDate } from "../lib/myPlaces";
 
@@ -8,8 +8,10 @@ export function MyPlaceCard({
   status,
   isExpanded,
   isSubmitting,
+  isTogglingVisibility,
   onToggleRejectedReason,
-  onResubmit
+  onResubmit,
+  onToggleVisibility
 }) {
   const isRejected = place.status === "REJECTED";
   const isPending = place.status === "PENDING";
@@ -44,7 +46,7 @@ export function MyPlaceCard({
               {isInactive ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e2d5c7] bg-[#f7f1ea] px-3 py-1 text-xs font-semibold tracking-[0.14em] text-[#6e6257]">
                   <Ban size={14} aria-hidden="true" />
-                  ถูกปิดโดยแอดมิน
+                  ซ่อนจากหน้า public
                 </span>
               ) : null}
             </div>
@@ -63,7 +65,7 @@ export function MyPlaceCard({
 
             <div className={`text-sm font-medium ${isInactive ? "text-[#7a5e46]" : status.titleClassName}`}>
               {isInactive
-                ? "รายการนี้ถูกปิดการแสดงผลโดยแอดมิน จึงไม่แสดงบนหน้า public แต่ข้อมูลยังอยู่ในระบบ"
+                ? "รายการนี้ยังผ่านการอนุมัติอยู่ แต่คุณปิดการแสดงผลไว้ จึงไม่แสดงบนหน้า public ตอนนี้"
                 : status.description}
             </div>
 
@@ -83,44 +85,51 @@ export function MyPlaceCard({
         <div className="flex flex-wrap gap-3">
           {isApproved ? (
             <>
-              {!isInactive ? (
-                <Link
-                  to={`/places/${place.slug}`}
-                  className="inline-flex items-center gap-2 rounded-full border border-[#c9b7a5] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#5b4737] transition hover:border-[#9a816c] hover:text-[#3f3328]"
-                >
-                  <Eye size={16} aria-hidden="true" />
-                  ดูสถานที่
-                </Link>
-              ) : null}
               <Link
-                to={`/my-places/${place.id}/edit`}
+                to={`/places/${place.slug}`}
                 className="inline-flex items-center gap-2 rounded-full border border-[#b8d4c1] bg-[#edf7ef] px-4 py-2.5 text-sm font-semibold text-[#2f6b41] transition hover:border-[#8fbea0] hover:text-[#255635]"
               >
-                <Pencil size={16} aria-hidden="true" />
-                แก้ไขและส่งตรวจใหม่
+                <Eye size={16} aria-hidden="true" />
+                ดูหน้าสาธารณะ
+              </Link>
+              <button
+                type="button"
+                onClick={onToggleVisibility}
+                disabled={isTogglingVisibility}
+                className="inline-flex items-center gap-2 rounded-full border border-[#c9b7a5] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#5b4737] transition hover:border-[#9a816c] hover:text-[#3f3328] disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                {isInactive ? <Eye size={16} aria-hidden="true" /> : <EyeOff size={16} aria-hidden="true" />}
+                {isTogglingVisibility
+                  ? "กำลังบันทึก..."
+                  : isInactive
+                    ? "เปิดการแสดงผลอีกครั้ง"
+                    : "ปิดการแสดงผล"}
+              </button>
+              <Link
+                to={`/my-places/${place.id}/edit`}
+                className="inline-flex items-center gap-2 rounded-full border border-[#d8cbbd] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#7b6756] transition hover:border-[#bda893] hover:text-[#5a4737]"
+              >
+                <CircleAlert size={16} aria-hidden="true" />
+                ดูรายละเอียดภายใน
               </Link>
             </>
           ) : null}
 
           {isPending ? (
             <>
-              <button
-                type="button"
-                disabled
-                className={`cursor-not-allowed rounded-full px-4 py-2.5 text-sm font-semibold ${
-                  isInactive
-                    ? "border border-[#e2d5c7] bg-[#f7f1ea] text-[#6e6257]"
-                    : "border border-[#eadbb8] bg-[#fff8e8] text-[#8a6432] opacity-90"
-                }`}
-              >
-                {isInactive ? "ถูกปิดการแสดงผล" : "รอตรวจสอบ"}
-              </button>
               <Link
                 to={`/my-places/${place.id}/edit`}
                 className="inline-flex items-center gap-2 rounded-full border border-[#c9b7a5] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#5b4737] transition hover:border-[#9a816c] hover:text-[#3f3328]"
               >
                 <Pencil size={16} aria-hidden="true" />
                 แก้ไขข้อมูล
+              </Link>
+              <Link
+                to={`/my-places/${place.id}/edit`}
+                className="inline-flex items-center gap-2 rounded-full border border-[#eadbb8] bg-[#fff8e8] px-4 py-2.5 text-sm font-semibold text-[#8a6432] transition hover:border-[#d8bf8f] hover:text-[#6c4f28]"
+              >
+                <Eye size={16} aria-hidden="true" />
+                ดูรายละเอียดภายใน
               </Link>
             </>
           ) : null}
@@ -151,6 +160,13 @@ export function MyPlaceCard({
                 <RefreshCw size={16} aria-hidden="true" className={isSubmitting ? "animate-spin" : ""} />
                 {isSubmitting ? "กำลังส่ง..." : "ส่งกลับเข้าตรวจสอบอีกครั้ง"}
               </button>
+              <Link
+                to={`/my-places/${place.id}/edit`}
+                className="inline-flex items-center gap-2 rounded-full border border-[#d8b7b7] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#8f4e4e] transition hover:bg-[#fff7f7]"
+              >
+                <Eye size={16} aria-hidden="true" />
+                ดูรายละเอียดภายใน
+              </Link>
             </>
           ) : null}
         </div>
