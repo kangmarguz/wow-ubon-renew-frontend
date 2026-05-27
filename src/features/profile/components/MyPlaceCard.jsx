@@ -1,26 +1,10 @@
 import { Link } from "react-router-dom";
-import { Ban, CircleAlert, Clock3, Eye, EyeOff, ImageOff, Pencil, RefreshCw, Star } from "lucide-react";
+import { Ban, CircleAlert, Clock3, Eye, EyeOff, Pencil, RefreshCw, Star } from "lucide-react";
 import { getPlaceCategoryLabel } from "../../../shared/constants/placeCategories";
+import { PlaceActionButton } from "../../../shared/ui/PlaceActionButton";
+import { PlaceStatusBadge } from "../../../shared/ui/PlaceStatusBadge";
+import { PlaceThumbnail } from "../../../shared/ui/PlaceThumbnail";
 import { formatMyPlaceDate } from "../lib/myPlaces";
-
-function getActionButtonClassName({ tone = "neutral", isPrimary = false, fullWidth = true, className = "" } = {}) {
-  const widthClassName = fullWidth ? "w-full" : "";
-
-  if (isPrimary) {
-    return `inline-flex min-h-11 ${widthClassName} items-center justify-center gap-2 rounded-full bg-[#8f4e4e] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#7a4040] ${className}`.trim();
-  }
-
-  const toneClassName =
-    tone === "success"
-      ? "border-[#b8d4c1] bg-[#edf7ef] text-[#2f6b41] hover:border-[#8fbea0] hover:text-[#255635]"
-      : tone === "warning"
-        ? "border-[#eadbb8] bg-[#fff8e8] text-[#8a6432] hover:border-[#d8bf8f] hover:text-[#6c4f28]"
-        : tone === "danger"
-          ? "border-[#d8b7b7] bg-white/90 text-[#8f4e4e] hover:bg-[#fff7f7]"
-          : "border-[#c9b7a5] bg-white/90 text-[#5b4737] hover:border-[#9a816c] hover:text-[#3f3328]";
-
-  return `inline-flex min-h-11 ${widthClassName} items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition ${toneClassName} ${className}`.trim();
-}
 
 export function MyPlaceCard({
   place,
@@ -42,27 +26,17 @@ export function MyPlaceCard({
     <div className={`rounded-[1.7rem] border p-5 shadow-[0_12px_28px_rgba(74,55,37,0.06)] ${status.panelClassName}`}>
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
         <div className="flex gap-4">
-          {place.coverImage ? (
-            <img
-              src={place.coverImage}
-              alt={place.name}
-              className="h-24 w-24 rounded-[1.4rem] border border-white/70 object-cover shadow-sm"
-            />
-          ) : (
-            <div className="flex h-24 w-24 flex-col items-center justify-center gap-2 rounded-[1.4rem] border border-dashed border-[#d7c5b4] bg-white/60 text-xs tracking-[0.12em] text-[#9a836d]">
-              <ImageOff size={18} aria-hidden="true" />
-              <span>ไม่มีรูป</span>
-            </div>
-          )}
+          <PlaceThumbnail
+            imageUrl={place.coverImage}
+            alt={place.name}
+            imageClassName="h-24 w-24 rounded-[1.4rem] border border-white/70 object-cover shadow-sm"
+            fallbackClassName="flex h-24 w-24 flex-col items-center justify-center gap-2 rounded-[1.4rem] border border-dashed border-[#d7c5b4] bg-white/60 text-xs tracking-[0.12em] text-[#9a836d]"
+          />
 
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-xs tracking-[0.22em] text-[#a06840]">{getPlaceCategoryLabel(place.category)}</span>
-              <span
-                className={`rounded-full border px-3 py-1 text-xs font-semibold tracking-[0.14em] ${status.badgeClassName}`}
-              >
-                {status.label}
-              </span>
+              <PlaceStatusBadge status={place.status} />
               {isInactive ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e2d5c7] bg-[#f7f1ea] px-3 py-1 text-xs font-semibold tracking-[0.14em] text-[#6e6257]">
                   <Ban size={14} aria-hidden="true" />
@@ -106,19 +80,17 @@ export function MyPlaceCard({
           {isApproved ? (
             <div className="ml-auto grid w-fit gap-3">
               {!isInactive ? (
-                <Link
-                  to={`/places/${place.slug}`}
-                  className={getActionButtonClassName({ tone: "success", fullWidth: false })}
-                >
+                <PlaceActionButton as={Link} to={`/places/${place.slug}`} tone="success" fullWidth={false}>
                   <Eye size={16} aria-hidden="true" />
                   ดูหน้าสาธารณะ
-                </Link>
+                </PlaceActionButton>
               ) : null}
-              <button
-                type="button"
+              <PlaceActionButton
                 onClick={onToggleVisibility}
                 disabled={isTogglingVisibility || isAdminHidden}
-                className={`${getActionButtonClassName({ tone: "neutral", fullWidth: false })} disabled:cursor-not-allowed disabled:opacity-70`}
+                tone="neutral"
+                fullWidth={false}
+                className="disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isInactive ? <Eye size={16} aria-hidden="true" /> : <EyeOff size={16} aria-hidden="true" />}
                 {isTogglingVisibility
@@ -128,65 +100,55 @@ export function MyPlaceCard({
                     : isInactive
                       ? "เปิดการแสดงผลอีกครั้ง"
                       : "ปิดการแสดงผล"}
-              </button>
+              </PlaceActionButton>
               {isAdminHidden ? (
                 <div className="rounded-[1.2rem] border border-[#eadbb8] bg-[#fff7e7] px-4 py-3 text-sm leading-6 text-[#8a6432]">
                   แอดมินปิดการแสดงผลของรายการนี้อยู่ คุณยังไม่สามารถเปิดกลับได้เอง
                 </div>
               ) : null}
-              <Link
-                to={`/my-places/${place.id}/edit`}
-                className={getActionButtonClassName({ tone: "neutral", fullWidth: false })}
-              >
+              <PlaceActionButton as={Link} to={`/my-places/${place.id}/edit`} tone="neutral" fullWidth={false}>
                 <CircleAlert size={16} aria-hidden="true" />
                 ดูรายละเอียดภายใน
-              </Link>
+              </PlaceActionButton>
             </div>
           ) : null}
 
           {isPending ? (
             <div className="grid gap-3 sm:grid-cols-2">
-              <Link to={`/my-places/${place.id}/edit`} className={getActionButtonClassName({ tone: "neutral" })}>
+              <PlaceActionButton as={Link} to={`/my-places/${place.id}/edit`} tone="neutral">
                 <Pencil size={16} aria-hidden="true" />
                 แก้ไขข้อมูล
-              </Link>
-              <Link to={`/my-places/${place.id}/edit`} className={getActionButtonClassName({ tone: "warning" })}>
+              </PlaceActionButton>
+              <PlaceActionButton as={Link} to={`/my-places/${place.id}/edit`} tone="warning">
                 <Eye size={16} aria-hidden="true" />
                 ข้อมูลภายใน
-              </Link>
+              </PlaceActionButton>
             </div>
           ) : null}
 
           {isRejected ? (
             <div className="grid gap-3 sm:grid-cols-2">
-              <Link to={`/my-places/${place.id}/edit`} className={getActionButtonClassName({ tone: "danger" })}>
+              <PlaceActionButton as={Link} to={`/my-places/${place.id}/edit`} tone="danger">
                 <Pencil size={16} aria-hidden="true" />
                 แก้ไขข้อมูล
-              </Link>
-              <button
-                type="button"
-                onClick={onToggleRejectedReason}
-                className={getActionButtonClassName({ tone: "danger" })}
-              >
+              </PlaceActionButton>
+              <PlaceActionButton onClick={onToggleRejectedReason} tone="danger">
                 <CircleAlert size={16} aria-hidden="true" />
                 {isExpanded ? "ซ่อนเหตุผล" : "ดูเหตุผล"}
-              </button>
-              <button
-                type="button"
+              </PlaceActionButton>
+              <PlaceActionButton
                 onClick={onResubmit}
                 disabled={isSubmitting}
-                className={`${getActionButtonClassName({ isPrimary: true, className: "sm:col-span-2" })} disabled:cursor-not-allowed disabled:opacity-70`}
+                isPrimary
+                className="sm:col-span-2 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <RefreshCw size={16} aria-hidden="true" className={isSubmitting ? "animate-spin" : ""} />
                 {isSubmitting ? "กำลังส่ง..." : "ส่งกลับเข้าตรวจอีกครั้ง"}
-              </button>
-              <Link
-                to={`/my-places/${place.id}/edit`}
-                className={getActionButtonClassName({ tone: "danger", className: "sm:col-span-2" })}
-              >
+              </PlaceActionButton>
+              <PlaceActionButton as={Link} to={`/my-places/${place.id}/edit`} tone="danger" className="sm:col-span-2">
                 <Eye size={16} aria-hidden="true" />
                 ข้อมูลภายใน
-              </Link>
+              </PlaceActionButton>
             </div>
           ) : null}
         </div>

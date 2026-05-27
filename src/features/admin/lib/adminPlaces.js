@@ -1,3 +1,5 @@
+import { getPlaceStatusBadgeClassName, getPlaceStatusLabel } from "../../../shared/constants/placeStatus";
+
 export const ADMIN_PLACES_PAGE_SIZE = 10;
 
 export const adminPlaceTabs = [
@@ -7,15 +9,15 @@ export const adminPlaceTabs = [
 ];
 
 export const adminPlaceStatusBadgeConfig = {
-  APPROVED: "border-[#cfe4d4] bg-[#edf7ef] text-[#2f6b41]",
-  PENDING: "border-[#eadbb8] bg-[#fff6df] text-[#8a6432]",
-  REJECTED: "border-[#ebc8c8] bg-[#fff1f1] text-[#9a4b4b]"
+  APPROVED: getPlaceStatusBadgeClassName("APPROVED"),
+  PENDING: getPlaceStatusBadgeClassName("PENDING"),
+  REJECTED: getPlaceStatusBadgeClassName("REJECTED")
 };
 
 export const adminPlaceStatusLabelConfig = {
-  APPROVED: "เผยแพร่แล้ว",
-  PENDING: "รอตรวจสอบ",
-  REJECTED: "ต้องแก้ไข"
+  APPROVED: getPlaceStatusLabel("APPROVED"),
+  PENDING: getPlaceStatusLabel("PENDING"),
+  REJECTED: getPlaceStatusLabel("REJECTED")
 };
 
 export function getFilteredAdminPlacesByTab(places, activeTab) {

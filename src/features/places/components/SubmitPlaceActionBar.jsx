@@ -10,26 +10,24 @@ export function SubmitPlaceActionBar({ isEditMode, isSubmitting, submitLabel, su
         {submitHint}
       </div>
 
-      <div className="rounded-[1.35rem] border border-[#e3d6c8] bg-white px-4 py-4 shadow-[0_10px_24px_rgba(74,55,37,0.06)]">
-        <div className="flex w-full flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
-          {isEditMode ? (
-            <Link
-              to={backLinkTo}
-              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-[#d7c5b4] bg-white/90 px-5 py-3 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d]"
-            >
-              <ArrowLeft size={16} aria-hidden="true" />
-              ย้อนกลับ
-            </Link>
-          ) : null}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center gap-2 rounded-full bg-[#3f3328] px-7 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(63,51,40,0.14)] transition hover:bg-[#2f251d] disabled:cursor-not-allowed disabled:opacity-60"
+      <div className="flex w-full flex-col-reverse gap-3 border-t border-[#e3d6c8] pt-4 sm:flex-row sm:items-center sm:justify-end">
+        {isEditMode ? (
+          <Link
+            to={backLinkTo}
+            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full border border-[#d7c5b4] bg-white/90 px-5 py-3 text-sm font-semibold text-[#6f5e4f] transition hover:border-[#b08c6f] hover:bg-white hover:text-[#4c3b2d]"
           >
-            <SubmitIcon size={16} aria-hidden="true" className={isSubmitting ? "animate-pulse" : ""} />
-            {submitLabel}
-          </button>
-        </div>
+            <ArrowLeft size={16} aria-hidden="true" />
+            ย้อนกลับ
+          </Link>
+        ) : null}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="inline-flex min-h-[48px] min-w-[220px] items-center justify-center gap-2 rounded-full bg-[#3f3328] px-7 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(63,51,40,0.14)] transition hover:bg-[#2f251d] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <SubmitIcon size={16} aria-hidden="true" className={isSubmitting ? "animate-pulse" : ""} />
+          {submitLabel}
+        </button>
       </div>
     </div>
   );
