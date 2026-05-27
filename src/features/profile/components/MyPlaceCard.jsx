@@ -3,6 +3,25 @@ import { Ban, CircleAlert, Clock3, Eye, EyeOff, ImageOff, Pencil, RefreshCw, Sta
 import { getPlaceCategoryLabel } from "../../../shared/constants/placeCategories";
 import { formatMyPlaceDate } from "../lib/myPlaces";
 
+function getActionButtonClassName({ tone = "neutral", isPrimary = false, fullWidth = true, className = "" } = {}) {
+  const widthClassName = fullWidth ? "w-full" : "";
+
+  if (isPrimary) {
+    return `inline-flex min-h-11 ${widthClassName} items-center justify-center gap-2 rounded-full bg-[#8f4e4e] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#7a4040] ${className}`.trim();
+  }
+
+  const toneClassName =
+    tone === "success"
+      ? "border-[#b8d4c1] bg-[#edf7ef] text-[#2f6b41] hover:border-[#8fbea0] hover:text-[#255635]"
+      : tone === "warning"
+        ? "border-[#eadbb8] bg-[#fff8e8] text-[#8a6432] hover:border-[#d8bf8f] hover:text-[#6c4f28]"
+        : tone === "danger"
+          ? "border-[#d8b7b7] bg-white/90 text-[#8f4e4e] hover:bg-[#fff7f7]"
+          : "border-[#c9b7a5] bg-white/90 text-[#5b4737] hover:border-[#9a816c] hover:text-[#3f3328]";
+
+  return `inline-flex min-h-11 ${widthClassName} items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-sm font-semibold transition ${toneClassName} ${className}`.trim();
+}
+
 export function MyPlaceCard({
   place,
   status,
@@ -82,12 +101,12 @@ export function MyPlaceCard({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="w-full xl:ml-auto xl:max-w-[25rem]">
           {isApproved ? (
-            <>
+            <div className="ml-auto grid w-fit gap-3">
               <Link
                 to={`/places/${place.slug}`}
-                className="inline-flex items-center gap-2 rounded-full border border-[#b8d4c1] bg-[#edf7ef] px-4 py-2.5 text-sm font-semibold text-[#2f6b41] transition hover:border-[#8fbea0] hover:text-[#255635]"
+                className={getActionButtonClassName({ tone: "success", fullWidth: false })}
               >
                 <Eye size={16} aria-hidden="true" />
                 ดูหน้าสาธารณะ
@@ -96,57 +115,44 @@ export function MyPlaceCard({
                 type="button"
                 onClick={onToggleVisibility}
                 disabled={isTogglingVisibility}
-                className="inline-flex items-center gap-2 rounded-full border border-[#c9b7a5] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#5b4737] transition hover:border-[#9a816c] hover:text-[#3f3328] disabled:cursor-not-allowed disabled:opacity-70"
+                className={`${getActionButtonClassName({ tone: "neutral", fullWidth: false })} disabled:cursor-not-allowed disabled:opacity-70`}
               >
                 {isInactive ? <Eye size={16} aria-hidden="true" /> : <EyeOff size={16} aria-hidden="true" />}
-                {isTogglingVisibility
-                  ? "กำลังบันทึก..."
-                  : isInactive
-                    ? "เปิดการแสดงผลอีกครั้ง"
-                    : "ปิดการแสดงผล"}
+                {isTogglingVisibility ? "กำลังบันทึก..." : isInactive ? "เปิดการแสดงผลอีกครั้ง" : "ปิดการแสดงผล"}
               </button>
               <Link
                 to={`/my-places/${place.id}/edit`}
-                className="inline-flex items-center gap-2 rounded-full border border-[#d8cbbd] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#7b6756] transition hover:border-[#bda893] hover:text-[#5a4737]"
+                className={getActionButtonClassName({ tone: "neutral", fullWidth: false })}
               >
                 <CircleAlert size={16} aria-hidden="true" />
                 ดูรายละเอียดภายใน
               </Link>
-            </>
+            </div>
           ) : null}
 
           {isPending ? (
-            <>
-              <Link
-                to={`/my-places/${place.id}/edit`}
-                className="inline-flex items-center gap-2 rounded-full border border-[#c9b7a5] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#5b4737] transition hover:border-[#9a816c] hover:text-[#3f3328]"
-              >
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Link to={`/my-places/${place.id}/edit`} className={getActionButtonClassName({ tone: "neutral" })}>
                 <Pencil size={16} aria-hidden="true" />
                 แก้ไขข้อมูล
               </Link>
-              <Link
-                to={`/my-places/${place.id}/edit`}
-                className="inline-flex items-center gap-2 rounded-full border border-[#eadbb8] bg-[#fff8e8] px-4 py-2.5 text-sm font-semibold text-[#8a6432] transition hover:border-[#d8bf8f] hover:text-[#6c4f28]"
-              >
+              <Link to={`/my-places/${place.id}/edit`} className={getActionButtonClassName({ tone: "warning" })}>
                 <Eye size={16} aria-hidden="true" />
-                ดูรายละเอียดภายใน
+                ข้อมูลภายใน
               </Link>
-            </>
+            </div>
           ) : null}
 
           {isRejected ? (
-            <>
-              <Link
-                to={`/my-places/${place.id}/edit`}
-                className="inline-flex items-center gap-2 rounded-full border border-[#d8b7b7] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#8f4e4e] transition hover:bg-[#fff7f7]"
-              >
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Link to={`/my-places/${place.id}/edit`} className={getActionButtonClassName({ tone: "danger" })}>
                 <Pencil size={16} aria-hidden="true" />
                 แก้ไขข้อมูล
               </Link>
               <button
                 type="button"
                 onClick={onToggleRejectedReason}
-                className="inline-flex items-center gap-2 rounded-full border border-[#d8b7b7] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#8f4e4e] transition hover:bg-[#fff7f7]"
+                className={getActionButtonClassName({ tone: "danger" })}
               >
                 <CircleAlert size={16} aria-hidden="true" />
                 {isExpanded ? "ซ่อนเหตุผล" : "ดูเหตุผล"}
@@ -155,19 +161,19 @@ export function MyPlaceCard({
                 type="button"
                 onClick={onResubmit}
                 disabled={isSubmitting}
-                className="inline-flex items-center gap-2 rounded-full bg-[#8f4e4e] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#7a4040] disabled:cursor-not-allowed disabled:opacity-70"
+                className={`${getActionButtonClassName({ isPrimary: true, className: "sm:col-span-2" })} disabled:cursor-not-allowed disabled:opacity-70`}
               >
                 <RefreshCw size={16} aria-hidden="true" className={isSubmitting ? "animate-spin" : ""} />
-                {isSubmitting ? "กำลังส่ง..." : "ส่งกลับเข้าตรวจสอบอีกครั้ง"}
+                {isSubmitting ? "กำลังส่ง..." : "ส่งกลับเข้าตรวจอีกครั้ง"}
               </button>
               <Link
                 to={`/my-places/${place.id}/edit`}
-                className="inline-flex items-center gap-2 rounded-full border border-[#d8b7b7] bg-white/90 px-4 py-2.5 text-sm font-semibold text-[#8f4e4e] transition hover:bg-[#fff7f7]"
+                className={getActionButtonClassName({ tone: "danger", className: "sm:col-span-2" })}
               >
                 <Eye size={16} aria-hidden="true" />
-                ดูรายละเอียดภายใน
+                ข้อมูลภายใน
               </Link>
-            </>
+            </div>
           ) : null}
         </div>
       </div>
