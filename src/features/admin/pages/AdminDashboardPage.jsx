@@ -5,6 +5,7 @@ import {
   Clock3,
   Eye,
   EyeOff,
+  KeyRound,
   MapPinned,
   MessageSquare,
   ShieldCheck,
@@ -33,6 +34,13 @@ const metricCards = [
     description: "สถานที่ที่ผ่านอนุมัติและแสดงบนหน้า public",
     accentClassName: "text-[#2f6b41]",
     icon: MapPinned
+  },
+  {
+    key: "pendingPasswordResetRequests",
+    title: "คำขอรีเซ็ตรหัสผ่าน",
+    description: "คำขอที่ยังรอให้แอดมินอนุมัติหรือปฏิเสธ",
+    accentClassName: "text-[#8f4e4e]",
+    icon: KeyRound
   },
   {
     key: "visibleReviews",
@@ -138,7 +146,74 @@ export function AdminDashboardPage() {
         ) : null}
       </SectionCard>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 xl:grid-cols-3">
+        <SectionCard
+          title="คำขอรีเซ็ตรหัสผ่านล่าสุด"
+          description="สแกนคำขอที่ค้างอยู่เพื่อเข้าไป approve หรือ reject ได้จากหน้าเดียว"
+          className="border-[#eadfce] bg-[linear-gradient(180deg,rgba(255,253,249,0.98),rgba(250,244,236,0.94))]"
+          titleClassName="text-[1.4rem] text-[#3f3328]"
+          descriptionClassName="text-[14px] leading-7 text-[#74685e]"
+          contentClassName="space-y-3"
+        >
+          {isLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="rounded-[1.4rem] border border-[#eadfce] bg-white/85 p-4">
+                  <div className="h-3 w-24 rounded-full bg-[#efe5da]" />
+                  <div className="mt-3 h-4 w-3/4 rounded-full bg-[#f1e8de]" />
+                  <div className="mt-2 h-3 w-1/2 rounded-full bg-[#f1e8de]" />
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {!isLoading && !isError && summary?.recentPasswordResetRequests?.length ? (
+            <div className="space-y-3">
+              {summary.recentPasswordResetRequests.map((request) => (
+                <div
+                  key={request.id}
+                  className="rounded-[1.4rem] border border-[#e7dbcf] bg-white/92 p-4 shadow-[0_8px_18px_rgba(74,55,37,0.04)]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="inline-flex items-center gap-2 text-base font-semibold text-[#3f3328]">
+                        <KeyRound size={16} aria-hidden="true" className="text-[#8c7a6a]" />
+                        {request.user?.name || "ผู้ใช้ไม่ทราบชื่อ"}
+                      </div>
+                      <div className="mt-1 flex flex-col gap-1 text-sm text-[#74685e]">
+                        <span>{request.user?.email || "-"}</span>
+                        <span>{request.user?.phoneNumber || "-"}</span>
+                        <span className="inline-flex items-center gap-1.5 text-xs text-[#8f7d6d]">
+                          <CalendarDays size={14} aria-hidden="true" />
+                          {new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short" }).format(
+                            new Date(request.requestedAt)
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#ecd0d0] bg-[#fff3f3] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[#934c4c]">
+                      <KeyRound size={13} aria-hidden="true" />
+                      {request.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          {!isLoading && !isError && !summary?.recentPasswordResetRequests?.length ? (
+            <StateNotice>ตอนนี้ไม่มีคำขอรีเซ็ตรหัสผ่านที่รอตรวจ</StateNotice>
+          ) : null}
+
+          <Link
+            to="/admin/password-resets"
+            className="inline-flex items-center gap-2 rounded-full border border-[#c9b7a5] bg-white/85 px-4 py-2 text-sm font-semibold text-[#5b4737] transition hover:border-[#9a816c] hover:text-[#3f3328]"
+          >
+            ไปหน้าคำขอรีเซ็ตรหัสผ่าน
+            <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+        </SectionCard>
+
         <SectionCard
           title="สถานที่รอตรวจล่าสุด"
           description="ดูรายการ PENDING ล่าสุดเพื่อเข้าไปอนุมัติหรือปฏิเสธต่อได้ทันที"

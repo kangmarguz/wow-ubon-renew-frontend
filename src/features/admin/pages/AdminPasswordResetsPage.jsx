@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CalendarClock, CheckCircle2, KeyRound, ShieldAlert, XCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import { PageIntro } from "../../../shared/ui/PageIntro";
 import { SectionCard } from "../../../shared/ui/SectionCard";
@@ -21,6 +22,33 @@ function getStatusBadgeClassName(status) {
 
   return "border-[#e7d9c8] bg-[#fbf4ea] text-[#8b6a4f]";
 }
+
+const summaryCards = [
+  {
+    key: "total",
+    label: "คำขอทั้งหมด",
+    icon: KeyRound,
+    accentClassName: "text-[#5f4b3d]"
+  },
+  {
+    key: "pending",
+    label: "รอตรวจ",
+    icon: ShieldAlert,
+    accentClassName: "text-[#8f4e4e]"
+  },
+  {
+    key: "approved",
+    label: "อนุมัติแล้ว",
+    icon: CheckCircle2,
+    accentClassName: "text-[#416141]"
+  },
+  {
+    key: "rejected",
+    label: "ปฏิเสธแล้ว",
+    icon: XCircle,
+    accentClassName: "text-[#934c4c]"
+  }
+];
 
 export function AdminPasswordResetsPage() {
   const queryClient = useQueryClient();
@@ -66,6 +94,16 @@ export function AdminPasswordResetsPage() {
     return requests.filter((request) => request.status === selectedStatus);
   }, [requests, selectedStatus]);
 
+  const summary = useMemo(
+    () => ({
+      total: requests.length,
+      pending: requests.filter((request) => request.status === "PENDING").length,
+      approved: requests.filter((request) => request.status === "APPROVED").length,
+      rejected: requests.filter((request) => request.status === "REJECTED").length
+    }),
+    [requests]
+  );
+
   return (
     <div className="space-y-8">
       <PageIntro
@@ -76,8 +114,51 @@ export function AdminPasswordResetsPage() {
       />
 
       <SectionCard
+        title="ภาพรวมคิวรีเซ็ตรหัสผ่าน"
+        description="สรุปจำนวนคำขอทั้งหมดและสถานะล่าสุด เพื่อให้รู้ทันทีว่ามีงานค้างต้องเข้าไปจัดการมากน้อยแค่ไหน"
+        className="border-[#eadfce] bg-[linear-gradient(180deg,rgba(255,253,249,0.98),rgba(250,244,236,0.94))]"
+        titleClassName="text-[1.6rem] text-[#3f3328]"
+        descriptionClassName="text-[14px] leading-7 text-[#74685e]"
+        contentClassName="space-y-4"
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {summaryCards.map((card) => {
+            const Icon = card.icon;
+
+            return (
+              <div
+                key={card.key}
+                className="rounded-[1.5rem] border border-[#e5d8cb] bg-white/88 px-5 py-4 shadow-[0_10px_24px_rgba(74,55,37,0.04)]"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-xs tracking-[0.18em] text-[#9a836d]">{card.label}</div>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#faf2e8] text-[#8d735f]">
+                    <Icon size={18} aria-hidden="true" />
+                  </div>
+                </div>
+                <div className={`mt-3 text-[2.2rem] font-semibold leading-none ${card.accentClassName}`}>{summary[card.key]}</div>
+              </div>
+            );
+          })}
+        </div>
+
+        {summary.pending > 0 ? (
+          <div className="rounded-[1.4rem] border border-[#ecd0d0] bg-[#fff4f4] px-4 py-3 text-sm leading-7 text-[#7a4b4b]">
+            ตอนนี้มีคำขอรีเซ็ตรหัสผ่านที่ยังรอการตรวจ {summary.pending} รายการ ควรตรวจคิวนี้ก่อนเพื่อปลดล็อกการเข้าใช้งานของผู้ใช้
+          </div>
+        ) : (
+          <div className="rounded-[1.4rem] border border-[#dce7dc] bg-[#f4faf4] px-4 py-3 text-sm leading-7 text-[#476347]">
+            ตอนนี้ไม่มีคำขอรีเซ็ตรหัสผ่านที่ค้างอยู่ในคิว
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard
         title="คิวคำขอ"
         description="แสดงรายการคำขอทั้งหมด โดยกันคำขอที่ค้างอยู่ซ้ำซ้อนและให้แอดมินตัดสินใจจากข้อมูลอีเมลกับเบอร์โทรที่ผู้ใช้ส่งเข้ามา"
+        className="border-[#eadfce] bg-[linear-gradient(180deg,rgba(255,253,249,0.98),rgba(250,244,236,0.94))]"
+        titleClassName="text-[1.6rem] text-[#3f3328]"
+        descriptionClassName="text-[14px] leading-7 text-[#74685e]"
         contentClassName="space-y-4"
       >
         <div className="flex flex-wrap items-center gap-3">
@@ -87,10 +168,10 @@ export function AdminPasswordResetsPage() {
             onChange={(event) => setSelectedStatus(event.target.value)}
             className="rounded-[1rem] border border-[#d8cbbd] bg-[#fffdf9] px-4 py-2.5 text-sm text-[#43362c] outline-none transition focus:border-[#8b6a4f] focus:ring-2 focus:ring-[#e8d8c7]"
           >
-            <option value="ALL">ALL</option>
-            <option value="PENDING">PENDING</option>
-            <option value="APPROVED">APPROVED</option>
-            <option value="REJECTED">REJECTED</option>
+            <option value="ALL">ทั้งหมด</option>
+            <option value="PENDING">รอตรวจ</option>
+            <option value="APPROVED">อนุมัติแล้ว</option>
+            <option value="REJECTED">ปฏิเสธแล้ว</option>
           </select>
         </div>
 
@@ -123,7 +204,8 @@ export function AdminPasswordResetsPage() {
                       </div>
                       <div className="text-sm text-[#74685e]">อีเมล: {request.emailSnapshot}</div>
                       <div className="text-sm text-[#74685e]">เบอร์โทร: {request.phoneNumberSnapshot}</div>
-                      <div className="text-xs text-[#8f7d6d]">
+                      <div className="inline-flex items-center gap-1.5 text-xs text-[#8f7d6d]">
+                        <CalendarClock size={14} aria-hidden="true" />
                         ส่งคำขอเมื่อ {new Date(request.requestedAt).toLocaleString("th-TH")}
                       </div>
                       {request.admin ? (

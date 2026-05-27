@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, LogOut } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { fetchAdminDashboard } from "../../../features/admin/api/adminDashboardApi";
 import { adminLinks, userLinks } from "../../constants/navigation";
 import { MenuSection } from "./MenuSection";
 
@@ -8,6 +10,22 @@ export function UserMenu({ user, onLogout, isPasswordResetLocked = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const menuRef = useRef(null);
+  const isAdmin = user.role === "ADMIN";
+
+  const { data: adminDashboardSummary } = useQuery({
+    queryKey: ["admin-dashboard"],
+    queryFn: fetchAdminDashboard,
+    enabled: isAdmin && !isPasswordResetLocked
+  });
+
+  const adminLinksWithBadges = adminLinks.map((link) =>
+    link.to === "/admin/password-resets"
+      ? {
+          ...link,
+          badgeCount: adminDashboardSummary?.pendingPasswordResetRequests || 0
+        }
+      : link
+  );
 
   useEffect(() => {
     setIsOpen(false);
@@ -69,7 +87,7 @@ export function UserMenu({ user, onLogout, isPasswordResetLocked = false }) {
         ) : (
           <>
             <MenuSection title="USER MENU" links={userLinks} />
-            {user.role === "ADMIN" ? <MenuSection title="ADMIN MENU" links={adminLinks} /> : null}
+            {isAdmin ? <MenuSection title="ADMIN MENU" links={adminLinksWithBadges} /> : null}
           </>
         )}
 
