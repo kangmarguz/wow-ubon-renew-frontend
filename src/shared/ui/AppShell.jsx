@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuthStore } from "../../features/auth/store/useAuthStore";
 import { publicLinks } from "../constants/navigation";
+import { MobileNavDrawer } from "./app-shell/MobileNavDrawer";
 import { NavItem } from "./app-shell/NavItem";
 import { UserMenu } from "./app-shell/UserMenu";
 
@@ -15,6 +16,7 @@ export function AppShell() {
         <div className="mx-auto max-w-6xl">
           <div className="relative overflow-visible rounded-[2rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,253,249,0.88),rgba(250,244,236,0.78))] px-4 py-4 shadow-[0_16px_38px_rgba(74,55,37,0.08)] backdrop-blur md:px-6">
             <div className="pointer-events-none absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_top_left,rgba(219,188,157,0.18),transparent_22%),radial-gradient(circle_at_86%_12%,rgba(110,143,121,0.1),transparent_16%)]" />
+
             <div className="relative flex items-center justify-between gap-4">
               <div className="min-w-0">
                 {isPasswordResetLocked ? (
@@ -49,13 +51,15 @@ export function AppShell() {
               )}
 
               <div className="flex items-center gap-3">
-                {user ? (
-                  <UserMenu user={user} onLogout={clearAuth} isPasswordResetLocked={isPasswordResetLocked} />
-                ) : (
-                  <div className="flex items-center gap-2">
+                <MobileNavDrawer user={user} onLogout={clearAuth} isPasswordResetLocked={isPasswordResetLocked} />
+
+                <div className="hidden items-center gap-2 md:flex">
+                  {user ? (
+                    <UserMenu user={user} onLogout={clearAuth} isPasswordResetLocked={isPasswordResetLocked} />
+                  ) : (
                     <NavItem to="/login" label="เข้าสู่ระบบ" />
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
